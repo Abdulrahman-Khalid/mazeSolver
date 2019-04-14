@@ -1,52 +1,113 @@
-const byte pin1Motor1 = 10;
-const byte pin2Motor1 = 11;
-const byte pinSpeedMotor1 = 3;
+#include <Ultrasonic.h>
 
-const byte pin1Motor2 = 12;
-const byte pin2Motor2 = 13;
-const byte pinSpeedMotor2 = 9;
+#define LEFT_MOTOR_PIN1 10
+#define LEFT_MOTOR_PIN2 11
+#define RIGHT_MOTOR_PIN1 12
+#define RIGHT_MOTOR_PIN2 13
 
-const byte motorSpeed = 100;
+Ultrasonic ultrasonicFront(2, 6);
+Ultrasonic ultrasonicLeft(4, 7);
+Ultrasonic ultrasonicRight(8, 5);
+
+enum class State : uint8_t {
+  TURN_RIGHT, TURN_LEFT, TURN_BACK, MOVE_FORWARD, TAKE_DECISION, FINISHED
+} currentState;
+
+// time that each state takes in millis
+enum class StateTime : uint16_t {
+  NONE = 0, TURN = 4000, MOVE = 5000, TURN_180 = 8000
+};
+
+uint16_t stateTime = (uint16_t) StateTime::NONE;
+
+inline bool noObstacle(const int& valueRead) {
+  return valueRead == 0; // TODO
+}
+
+inline void moveForward() {
+  digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+  digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+}
+
+inline void turnRight() {
+  digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+}
+
+inline void turnLeft() {
+  digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+}
+
+inline void stopMotors() {
+  digitalWrite(LEFT_MOTOR_PIN1, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+}
+
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(pin1Motor1, OUTPUT);
-  pinMode(pin2Motor1, OUTPUT);
-  pinMode(pinSpeedMotor1, OUTPUT);
-   pinMode(pin1Motor2, OUTPUT);
-  pinMode(pin2Motor2, OUTPUT);
-  pinMode(pinSpeedMotor2, OUTPUT);
+  Serial.begin(9600);
 
+  pinMode(LEFT_MOTOR_PIN1, OUTPUT);
+  pinMode(LEFT_MOTOR_PIN2, OUTPUT);
+  pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
+  pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
+  digitalWrite(LEFT_MOTOR_PIN2, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  digitalWrite(pin1Motor1, HIGH);
-  digitalWrite(pin2Motor1, LOW);
+  int startTime = millis();
 
-  digitalWrite(pin1Motor2, HIGH);
-  digitalWrite(pin2Motor2, LOW);
+  int frontRead = ultrasonicFront.read();
+  int rightRead = ultrasonicRight.read();
+  int leftRead = ultrasonicLeft.read();
 
-  analogWrite(pinSpeedMotor1, motorSpeed);
-  analogWrite(pinSpeedMotor2, motorSpeed);
-}
+  Serial.print("front:"); Serial.print(frontRead);
+  Serial.print(",left:"); Serial.print(leftRead);
+  Serial.print(",right:"); Serial.print(rightRead);
 
-void forward() {
-  digitalWrite(pin1Motor1, HIGH);
-  digitalWrite(pin2Motor1, LOW);
+  switch (currentState) {
+    case State::TAKE_DECISION:
+      if (noObstacle(frontRead) && noObstacle(rightRead) && noObstacle(leftRead)) {
+        currentState = State::FINISHED;
+      }
+      else if (noObstacle(frontRead)) {
+        moveForward();
+        currentState = State::MOVE_FORWARD;
+        stateTime = (uint16_t) StateTime::MOVE;
+      }
+      else if (noObstacle(rightRead)) {
+        turnRight();
+        currentState = State::TURN_RIGHT;
+        stateTime = (uint16_t) StateTime::TURN;
+      }
+      else if (noObstacle(leftRead)) {
+        turnLeft();
+        currentState = State::TURN_LEFT;
+        stateTime = (uint16_t) StateTime::TURN;
+      }
+      else {
+        turnRight();
+        currentState = State::TURN_BACK;
+        stateTime = (uint16_t) StateTime::TURN_180;
+      }
+      break;
+    case State::MOVE_FORWARD:
+      if (stateTime <= 0) {
+        stopMotors();
+        currentState = State::TAKE_DECISION;
+        stateTime = (uint16_t) StateTime::NONE;
+      }
+      break;
+    case State::TURN_BACK:
+    case State::TURN_RIGHT:
+    case State::TURN_LEFT:
+      if (stateTime <= 0) {
+        moveForward();
+        currentState = State::MOVE_FORWARD;
+        stateTime = (uint16_t) StateTime::MOVE;
+      }
+      break;
+    default: stopMotors();
+  }
 
-  digitalWrite(pin1Motor2, HIGH);
-  digitalWrite(pin2Motor2, LOW);
-
-  analogWrite(pinSpeedMotor1, motorSpeed);
-  analogWrite(pinSpeedMotor2, motorSpeed);
-}
-
-void left() {
-  digitalWrite(pin1Motor1, HIGH);
-  digitalWrite(pin2Motor1, LOW);
-}
-
-void right() {
-  digitalWrite(pin1Motor2, HIGH);
-  digitalWrite(pin2Motor2, LOW);
+  stateTime -= millis() - startTime;
 }
