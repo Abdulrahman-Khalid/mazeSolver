@@ -10,104 +10,101 @@ Ultrasonic ultrasonicLeft(4, 7);
 Ultrasonic ultrasonicRight(8, 5);
 
 enum class State : uint8_t {
-  TURN_RIGHT, TURN_LEFT, TURN_BACK, MOVE_FORWARD, TAKE_DECISION, FINISHED
+    TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
 } currentState;
 
 // time that each state takes in millis
 enum class StateTime : uint16_t {
-  NONE = 0, TURN = 4000, MOVE = 5000, TURN_180 = 8000
+    NONE = 0, TURN = 4000, MOVE = 5000, TURN_180 = 8000
 };
 
 uint16_t stateTime = (uint16_t) StateTime::NONE;
 
-inline bool noObstacle(const int& valueRead) {
-  return valueRead == 0; // TODO
+inline bool blocked(const int sensorRead) {
+    return sensorRead > 50; // TODO
 }
 
 inline void moveForward() {
-  digitalWrite(LEFT_MOTOR_PIN1, HIGH);
-  digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+    digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
 }
 
 inline void turnRight() {
-  digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
 }
 
 inline void turnLeft() {
-  digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+   digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
 }
 
 inline void stopMotors() {
-  digitalWrite(LEFT_MOTOR_PIN1, LOW);
-  digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+    digitalWrite(LEFT_MOTOR_PIN1, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN1, LOW);
 }
 
 void setup() {
-  Serial.begin(9600);
+    Serial.begin(9600);
 
-  pinMode(LEFT_MOTOR_PIN1, OUTPUT);
-  pinMode(LEFT_MOTOR_PIN2, OUTPUT);
-  pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
-  pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
-  digitalWrite(LEFT_MOTOR_PIN2, LOW);
-  digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+    pinMode(LEFT_MOTOR_PIN1, OUTPUT);
+    pinMode(LEFT_MOTOR_PIN2, OUTPUT);
+    pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
+    pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
+    digitalWrite(LEFT_MOTOR_PIN2, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
 void loop() {
-  int startTime = millis();
+    int startTime = millis();
 
-  int frontRead = ultrasonicFront.read();
-  int rightRead = ultrasonicRight.read();
-  int leftRead = ultrasonicLeft.read();
+    int frontRead = ultrasonicFront.read();
+    int rightRead = ultrasonicRight.read();
+    int leftRead = ultrasonicLeft.read();
 
-  Serial.print("front:"); Serial.print(frontRead);
-  Serial.print(",left:"); Serial.print(leftRead);
-  Serial.print(",right:"); Serial.print(rightRead);
+    Serial.print("front:"); Serial.print(frontRead);
+    Serial.print(",left:"); Serial.print(leftRead);
+    Serial.print(",right:"); Serial.print(rightRead);
 
-  switch (currentState) {
-    case State::TAKE_DECISION:
-      if (noObstacle(frontRead) && noObstacle(rightRead) && noObstacle(leftRead)) {
-        currentState = State::FINISHED;
-      }
-      else if (noObstacle(frontRead)) {
-        moveForward();
-        currentState = State::MOVE_FORWARD;
-        stateTime = (uint16_t) StateTime::MOVE;
-      }
-      else if (noObstacle(rightRead)) {
-        turnRight();
-        currentState = State::TURN_RIGHT;
-        stateTime = (uint16_t) StateTime::TURN;
-      }
-      else if (noObstacle(leftRead)) {
-        turnLeft();
-        currentState = State::TURN_LEFT;
-        stateTime = (uint16_t) StateTime::TURN;
-      }
-      else {
-        turnRight();
-        currentState = State::TURN_BACK;
-        stateTime = (uint16_t) StateTime::TURN_180;
-      }
-      break;
-    case State::MOVE_FORWARD:
-      if (stateTime <= 0) {
-        stopMotors();
-        currentState = State::TAKE_DECISION;
-        stateTime = (uint16_t) StateTime::NONE;
-      }
-      break;
-    case State::TURN_BACK:
-    case State::TURN_RIGHT:
-    case State::TURN_LEFT:
-      if (stateTime <= 0) {
-        moveForward();
-        currentState = State::MOVE_FORWARD;
-        stateTime = (uint16_t) StateTime::MOVE;
-      }
-      break;
-    default: stopMotors();
-  }
+    switch (currentState) {
+        case State::TAKE_DECISION:
+            if (!blocked(frontRead)) {
+                moveForward();
+                currentState = State::MOVE_FORWARD;
+                stateTime = (uint16_t) StateTime::MOVE;
+            } else if (!blocked(rightRead)) {
+                turnRight();
+                currentState = State::TURN_RIGHT;
+                stateTime = (uint16_t) StateTime::TURN;
+            } else if (!blocked(leftRead)) {
+                turnLeft();
+                currentState = State::TURN_LEFT;
+                stateTime = (uint16_t) StateTime::TURN;
+            } else {
+                turnRight();
+                currentState = State::TURN_180;
+                stateTime = (uint16_t) StateTime::TURN_180;
+            }
+            break;
 
-  stateTime -= millis() - startTime;
+        case State::MOVE_FORWARD:
+          if (stateTime <= 0) {
+              stopMotors();
+              currentState = State::TAKE_DECISION;
+              stateTime = (uint16_t) StateTime::NONE;
+          }
+          break;
+
+        case State::TURN_180:
+        case State::TURN_RIGHT:
+        case State::TURN_LEFT:
+          if (stateTime <= 0) {
+              moveForward();
+              currentState = State::MOVE_FORWARD;
+              stateTime = (uint16_t) StateTime::MOVE;
+          }
+          break;
+
+        default: stopMotors();
+    }
+
+    stateTime -= millis() - startTime;
 }
