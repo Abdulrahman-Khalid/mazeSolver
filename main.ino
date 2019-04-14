@@ -65,7 +65,7 @@ void loop() {
     Serial.print(",right:"); Serial.print(rightRead);
 
     switch (currentState) {
-        case State::TAKE_DECISION:
+        case State::TAKE_DECISION: {
             if (!blocked(frontRead)) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
@@ -84,24 +84,27 @@ void loop() {
                 stateTime = (uint16_t) StateTime::TURN_180;
             }
             break;
+        }
 
-        case State::MOVE_FORWARD:
+        case State::MOVE_FORWARD: {
           if (stateTime <= 0) {
               stopMotors();
               currentState = State::TAKE_DECISION;
               stateTime = (uint16_t) StateTime::NONE;
           }
           break;
+        }
 
         case State::TURN_180:
         case State::TURN_RIGHT:
-        case State::TURN_LEFT:
+        case State::TURN_LEFT:  {
           if (stateTime <= 0) {
               moveForward();
               currentState = State::MOVE_FORWARD;
               stateTime = (uint16_t) StateTime::MOVE;
           }
           break;
+        }
 
         default: stopMotors();
     }
