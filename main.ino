@@ -69,17 +69,22 @@ void loop() {
 
     switch (currentState) {
         case State::TAKE_DECISION: {
-            if (maze.finished()) {
+            maze.updateAdjacentWalls(blocked(frontRead), blocked(rightRead), blocked(leftRead));
+            maze.updateCellsValues();
+            Maze::Direction dir = maze.whereToGo(); // updates position
+            maze.updateOrientation(dir);
+
+            if (maze.finished() || dir == STOP) {
                 currentState = State::FINISHED;
-            } else if (!blocked(frontRead)) {
+            } else if (dir == FRONT) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (uint16_t) StateTime::MOVE;
-            } else if (!blocked(rightRead)) {
+            } else if (dir == RIGHT) {
                 turnRight();
                 currentState = State::TURN_RIGHT;
                 stateTime = (uint16_t) StateTime::TURN;
-            } else if (!blocked(leftRead)) {
+            } else if (dir == LEFT) {
                 turnLeft();
                 currentState = State::TURN_LEFT;
                 stateTime = (uint16_t) StateTime::TURN;

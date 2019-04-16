@@ -11,6 +11,7 @@
 
 #define START_X 0
 #define START_Y 0
+#define START_ORIENT SOUTH
 
 struct Cell {
     bool right:1;
@@ -29,8 +30,9 @@ public:
     Cell cells[MAZE_LENGTH][MAZE_HEIGHT];
 
     struct Position { uint8_t x, y; } position;
+    enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
 
-    Maze () :position({START_X, START_Y}) {
+    Maze () :position({START_X, START_Y}), orientation(START_ORIENT) {
         for (int i = 0; i < MAZE_LENGTH; i++) {
             for (int j = 0; j < MAZE_HEIGHT; j++) {
                 cells[i][j].value = abs(TARGET_X - i) + abs(TARGET_Y - j);
@@ -41,14 +43,95 @@ public:
                 cells[i][j].down = (j == MAZE_HEIGHT-1);
 
                 cells[i][j].visited = false;
-
-                printf("%i[%i%i%i%i] ", cells[i][j].value, cells[i][j].right, cells[i][j].left, cells[i][j].up, cells[i][j].down);
             }
-            printf("\n");
         }
     }
 
-    void solve() {
+
+    enum Direction { FRONT, RIGHT, BACK, LEFT, STOP };
+
+    inline Direction whereToGo() {
+        uint8_t minvalue = UINT8_MAX;
+        Direction dir = STOP;
+        Position newPos = position;
+        auto& c = cells[position.x][position.y];
+
+        if (c.up == 0 && cells[position.x][position.y-1].value < minvalue) {
+            minvalue = cells[position.x][position.y-1].value;
+            dir = FRONT;
+            newPos = {position.x, uint8_t(position.y-1)};
+        }
+
+        if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
+            minvalue = cells[position.x+1][position.y].value;
+            dir = RIGHT;
+            newPos = {uint8_t(position.x+1), position.y};
+        }
+
+        if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
+            minvalue = cells[position.x-1][position.y].value;
+            dir = LEFT;
+            newPos = {uint8_t(position.x-1), position.y};
+        }
+
+        if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
+            minvalue = cells[position.x][position.y+1].value;
+            dir = BACK;
+            newPos = {position.x, uint8_t(position.y+1)};
+        }
+
+        position = newPos;
+        return dir;
+    }
+
+    inline void updateOrientation(Direction dir) {
+        orientation = Orientation((orientation + dir) & 0b11);
+    }
+
+    inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {
+        auto& c = cells[position.x][position.y];
+
+        switch (orientation){
+            case EAST: {
+                c.right = frontBlocked;
+                c.up = leftBlocked;
+                c.down = rightBlocked;
+
+                break;
+            } 
+
+            case WEST: {
+                c.left = frontBlocked;
+                c.up = rightBlocked;
+                c.down = leftBlocked;
+
+                break;
+            }
+
+            case SOUTH: {
+                c.right = leftBlocked;
+                c.left = rightBlocked;
+                c.down = frontBlocked;
+
+                break;
+            }
+        
+            default: {
+                c.right = rightBlocked;
+                c.left = leftBlocked;
+                c.up = frontBlocked;
+
+                break;
+            }
+        }
+
+        if (position.x+1 < MAZE_LENGTH) cells[position.x+1][position.y].left = c.right;
+        if (position.x > 0) cells[position.x-1][position.y].right = c.left;
+        if (position.y+1 < MAZE_HEIGHT) cells[position.x][position.y+1].down = c.up;
+        if (position.y > 0) cells[position.x][position.y-1].up = c.down;
+    }
+
+    void updateCellsValues() {
         std::queue<Position> q;
         q.push({TARGET_X, TARGET_Y});
 
@@ -56,22 +139,22 @@ public:
             Position p = q.front();
             q.pop();
 
-            if (!cells[p.x+1][p.y].visited && cells[p.x][p.y].right == 0) {
+            if (cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
                 q.push({uint8_t(p.x + 1), p.y});
                 cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (!cells[p.x-1][p.y].visited && cells[p.x][p.y].left == 0) {
+            if (cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
                 q.push({uint8_t(p.x - 1), p.y});
                 cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (!cells[p.x][p.y+1].visited && cells[p.x][p.y].down == 0) {
+            if (cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
                 q.push({p.x, uint8_t(p.y + 1)});
                 cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
             }
 
-            if (!cells[p.x][p.y-1].visited && cells[p.x][p.y].up == 0) {
+            if (cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
                 q.push({p.x, uint8_t(p.y - 1)});
                 cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
             }
