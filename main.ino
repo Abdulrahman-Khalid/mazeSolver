@@ -1,4 +1,5 @@
 #include <Ultrasonic.h>
+#include "Maze.h"
 
 #define LEFT_MOTOR_PIN1 10
 #define LEFT_MOTOR_PIN2 11
@@ -8,6 +9,8 @@
 Ultrasonic ultrasonicFront(2, 6);
 Ultrasonic ultrasonicLeft(4, 7);
 Ultrasonic ultrasonicRight(8, 5);
+
+Maze maze;
 
 enum class State : uint8_t {
     TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
@@ -21,7 +24,7 @@ enum class StateTime : uint16_t {
 uint16_t stateTime = (uint16_t) StateTime::NONE;
 
 inline bool blocked(const int sensorRead) {
-    return sensorRead > 50; // TODO
+    return sensorRead < 50; // TODO
 }
 
 inline void moveForward() {
@@ -66,7 +69,9 @@ void loop() {
 
     switch (currentState) {
         case State::TAKE_DECISION: {
-            if (!blocked(frontRead)) {
+            if (maze.finished()) {
+                currentState = State::FINISHED;
+            } else if (!blocked(frontRead)) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (uint16_t) StateTime::MOVE;
