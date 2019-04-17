@@ -5,6 +5,7 @@
 #define LEFT_MOTOR_PIN2 11
 #define RIGHT_MOTOR_PIN1 12
 #define RIGHT_MOTOR_PIN2 13
+#define START_BUTTON_PIN 1
 
 Ultrasonic ultrasonicFront(2, 6);
 Ultrasonic ultrasonicLeft(4, 7);
@@ -23,11 +24,13 @@ enum class StateTime : uint16_t {
 
 uint16_t stateTime = (uint16_t) StateTime::NONE;
 
+bool toStart = false;
+
 inline bool blocked(const int sensorRead) {
     return sensorRead < 50; // TODO
 }
 
-inline void moveForward() {
+igit nline void moveForward() {
     digitalWrite(LEFT_MOTOR_PIN1, HIGH);
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
 }
@@ -57,6 +60,11 @@ void setup() {
 }
 
 void loop() {
+    if (!toStart) {
+        toStart = digitalRead(START_BUTTON_PIN);
+        return;
+    }
+
     int startTime = millis();
 
     int frontRead = ultrasonicFront.read();
@@ -76,6 +84,7 @@ void loop() {
 
             if (maze.finished() || dir == STOP) {
                 currentState = State::FINISHED;
+                toStart = false;
             } else if (dir == FRONT) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
@@ -101,7 +110,10 @@ void loop() {
               stopMotors();
               currentState = State::TAKE_DECISION;
               stateTime = (uint16_t) StateTime::NONE;
+              break;
           }
+            while (blocked(frontRead)) {stopMotors();}
+            moveForward();
           break;
         }
 
