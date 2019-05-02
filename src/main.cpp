@@ -12,12 +12,14 @@
 #ifndef DEBUG
 #define print(n)
 #define serialBegin(n)
+#define printv(n)
 #elif NATIVE == 1
 #include <stdio.h>
 #define print(n) printf(n)
 #define serialBegin(n) 
 #else
 #define print(n) Serial.print(n)
+#define printv(n) Serial.print(#n"=");Serial.print(n);Serial.print(",")
 #define serialBegin(n) Serial.begin(n)
 #endif
 
@@ -26,12 +28,12 @@
 #define LEFT_MOTOR_PIN1 10
 #define LEFT_MOTOR_PIN2 11
 #define LEFT_MOTOR_SPD_PIN 3
-#define LEFT_MOTOR_SPD 200
+#define LEFT_MOTOR_SPD 183
 
 #define RIGHT_MOTOR_PIN1 12
 #define RIGHT_MOTOR_PIN2 13
 #define RIGHT_MOTOR_SPD_PIN 9
-#define RIGHT_MOTOR_SPD 220
+#define RIGHT_MOTOR_SPD 163
 
 #define START_BUTTON_PIN 1
 
@@ -49,7 +51,7 @@ enum class State : uint8_t {
 
 // time that each state takes in millis
 enum class StateTime : uint16_t {
-    NONE = 0, TURN = 4000, MOVE = 5000, TURN_180 = 8000
+    NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
 };
 
 uint16_t stateTime = (uint16_t) StateTime::NONE;
@@ -143,25 +145,6 @@ void setup() {
 }
 
 void loop() {
-    /*DEBUG*/
-
-    // rightWheelForward();
-    // rightWheelBackward();
-    // leftWheelForward();
-    // leftWheelBackward();
-    // moveForward();
-    // turnLeft();
-    // turnRight();
-
-    // frontBlocked();
-    // rightBlocked();
-    // leftBlocked();
-
-    moveForward();
-    print('\n');
-    return;
-
-
     if (!toStart) {
         toStart = digitalRead(START_BUTTON_PIN);
         return;
@@ -169,12 +152,22 @@ void loop() {
 
     int startTime = millis();
 
+    printv(startTime);
+    printv(currentState);
+
     switch (currentState) {
         case State::TAKE_DECISION: {
+            print(":TAKE_DECISION:");
+
             maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
             maze.updateCellsValues();
             Maze::Direction dir = maze.whereToGo(); // updates position
             maze.updateOrientation(dir);
+
+            printv(dir);
+            printv(maze.position.x);
+            printv(maze.position.y);
+            printv(maze.orientation);
 
             if (maze.finished() || dir == Maze::STOP) {
                 currentState = State::FINISHED;
@@ -200,29 +193,38 @@ void loop() {
         }
 
         case State::MOVE_FORWARD: {
-          if (stateTime <= 0) {
-              stopMotors();
-              currentState = State::TAKE_DECISION;
-              stateTime = (uint16_t) StateTime::NONE;
-              break;
-          }
+            print(":MOVE_FORWARD:");
+
+            if (stateTime <= 0) {
+                stopMotors();
+                currentState = State::TAKE_DECISION;
+                stateTime = (uint16_t) StateTime::NONE;
+
+                print(":END:MOVE_FORWARD:");
+                delay(1000); // TODO
+                break;
+            }
             while (frontBlocked()) {stopMotors();}
             moveForward();
-          break;
+            break;
         }
 
         case State::TURN_180:
         case State::TURN_RIGHT:
         case State::TURN_LEFT:  {
-          if (stateTime <= 0) {
-              moveForward();
-              currentState = State::MOVE_FORWARD;
-              stateTime = (uint16_t) StateTime::MOVE;
-          }
-          break;
+            print(":TURN_*:");
+
+            if (stateTime <= 0) {
+                print(":END:TURN_*:");
+
+                moveForward();
+                currentState = State::MOVE_FORWARD;
+                stateTime = (uint16_t) StateTime::MOVE;
+            }
+            break;
         }
 
-        default: stopMotors();
+        default: stopMotors(); print(":FINISHED:");
     }
 
     stateTime -= millis() - startTime;

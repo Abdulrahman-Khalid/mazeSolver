@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <cppQueue.h>
 
-#define MAZE_HEIGHT 5
-#define MAZE_LENGTH 5
+#define MAZE_HEIGHT 3
+#define MAZE_LENGTH 2
 
-#define TARGET_X 3
-#define TARGET_Y 3
+#define TARGET_X 2
+#define TARGET_Y 2
 
 #define START_X 0
 #define START_Y 0
