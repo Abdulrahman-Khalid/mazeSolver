@@ -1,3 +1,13 @@
+#ifndef UNO
+#define UNO 1
+#endif
+
+#ifdef TIVA
+#include <Energia.h>
+#elif UNO == 1
+#include <Arduino.h>
+#endif
+
 #include <Ultrasonic.h>
 #include "Maze.h"
 
@@ -30,7 +40,7 @@ inline bool blocked(const int sensorRead) {
     return sensorRead < 50; // TODO
 }
 
-igit nline void moveForward() {
+inline void moveForward() {
     digitalWrite(LEFT_MOTOR_PIN1, HIGH);
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
 }
@@ -82,18 +92,18 @@ void loop() {
             Maze::Direction dir = maze.whereToGo(); // updates position
             maze.updateOrientation(dir);
 
-            if (maze.finished() || dir == STOP) {
+            if (maze.finished() || dir == Maze::STOP) {
                 currentState = State::FINISHED;
                 toStart = false;
-            } else if (dir == FRONT) {
+            } else if (dir == Maze::FRONT) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (uint16_t) StateTime::MOVE;
-            } else if (dir == RIGHT) {
+            } else if (dir == Maze::RIGHT) {
                 turnRight();
                 currentState = State::TURN_RIGHT;
                 stateTime = (uint16_t) StateTime::TURN;
-            } else if (dir == LEFT) {
+            } else if (dir == Maze::LEFT) {
                 turnLeft();
                 currentState = State::TURN_LEFT;
                 stateTime = (uint16_t) StateTime::TURN;

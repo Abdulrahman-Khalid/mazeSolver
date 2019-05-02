@@ -1,7 +1,7 @@
-#include <cstdint>
-#include <cmath>
-#include <cstdio>
-#include <queue>
+#include <stdint.h>
+#include <math.h>
+#include <stdio.h>
+#include <cppQueue.h>
 
 #define MAZE_HEIGHT 5
 #define MAZE_LENGTH 5
@@ -28,11 +28,13 @@ class Maze {
 public:
     //      [     X     ][     Y     ]
     Cell cells[MAZE_LENGTH][MAZE_HEIGHT];
+    Queue q;
 
     struct Position { uint8_t x, y; } position;
     enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
 
-    Maze () :position({START_X, START_Y}), orientation(START_ORIENT) {
+    Maze () :position({START_X, START_Y}), orientation(START_ORIENT), 
+            q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH) {
         for (int i = 0; i < MAZE_LENGTH; i++) {
             for (int j = 0; j < MAZE_HEIGHT; j++) {
                 cells[i][j].value = abs(TARGET_X - i) + abs(TARGET_Y - j);
@@ -132,30 +134,35 @@ public:
     }
 
     void updateCellsValues() {
-        std::queue<Position> q;
-        q.push({TARGET_X, TARGET_Y});
+        Position p = {TARGET_X, TARGET_Y};
+        
+        q.flush();
+        q.push(&p);
 
-        while (!q.empty()) {
-            Position p = q.front();
-            q.pop();
+        while (q.pop(&p)) {
+            Position p2;
 
             if (cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
-                q.push({uint8_t(p.x + 1), p.y});
+                p2 = {uint8_t(p.x + 1), p.y};
+                q.push(&p2);
                 cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
             if (cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
-                q.push({uint8_t(p.x - 1), p.y});
+                p2 = {uint8_t(p.x - 1), p.y};
+                q.push(&p2);
                 cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
             if (cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
-                q.push({p.x, uint8_t(p.y + 1)});
+                p2 = {p.x, uint8_t(p.y + 1)};
+                q.push(&p2);
                 cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
             }
 
             if (cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
-                q.push({p.x, uint8_t(p.y - 1)});
+                p2 = {p.x, uint8_t(p.y - 1)};
+                q.push(&p2);
                 cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
             }
 
@@ -169,7 +176,7 @@ public:
         }
     }
 
-    bool finisehd() {
+    bool finished() {
         return position.x == TARGET_X && position.y == TARGET_Y;
     }
 };

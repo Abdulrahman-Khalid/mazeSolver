@@ -26,6 +26,8 @@
 #define CM 28
 #define INC 71
 
+#include <stdint.h>
+
 class Ultrasonic {
   public:
     Ultrasonic(uint8_t sigPin) : Ultrasonic(sigPin, sigPin) {};

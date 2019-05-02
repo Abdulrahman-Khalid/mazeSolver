@@ -1,0 +1,50 @@
+{
+    "name": "Queue", 
+    "version": "1.6", 
+    "keywords": [
+        "data", 
+        "storage"
+    ], 
+    "description": "Queue handling library.", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam", 
+        "espressif32", 
+        "espressif8266", 
+        "intel_arc32", 
+        "microchippic32", 
+        "nordicnrf51", 
+        "nordicnrf52", 
+        "ststm32", 
+        "teensy", 
+        "timsp430"
+    ], 
+    "authors": [
+        {
+            "email": "xgarmanboziax@gmail.com", 
+            "url": null, 
+            "maintainer": true, 
+            "name": "SMFSW"
+        }
+    ], 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/SMFSW/Queue"
+    }, 
+    "homepage": null, 
+    "export": {
+        "include": null, 
+        "exclude": [
+            "extras", 
+            "docs", 
+            "tests", 
+            "test", 
+            "*.doxyfile", 
+            "*.pdf"
+        ]
+    }, 
+    "id": 1566
+}
