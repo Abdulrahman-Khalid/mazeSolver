@@ -9,13 +9,28 @@
 #include <Ultrasonic.h>
 #endif
 
+#ifndef DEBUG
+#define print(n)
+#define serialBegin(n)
+#else
+#define print(n) Serial.print(n)
+#define serialBegin(n) Serial.begin(n)
+#endif
+
 #include "Maze.h"
 
 #define LEFT_MOTOR_PIN1 10
 #define LEFT_MOTOR_PIN2 11
+#define LEFT_MOTOR_SPD_PIN 3
+#define LEFT_MOTOR_SPD 200
+
 #define RIGHT_MOTOR_PIN1 12
 #define RIGHT_MOTOR_PIN2 13
+#define RIGHT_MOTOR_SPD_PIN 9
+#define RIGHT_MOTOR_SPD 200
+
 #define START_BUTTON_PIN 1
+
 
 Ultrasonic ultrasonicFront(2, 6);
 Ultrasonic ultrasonicLeft(4, 7);
@@ -34,42 +49,96 @@ enum class StateTime : uint16_t {
 
 uint16_t stateTime = (uint16_t) StateTime::NONE;
 
-bool toStart = false;
+bool toStart = true; // TODO, setup push button
 
-inline bool blocked(const int sensorRead) {
-    return sensorRead < 50; // TODO
+inline bool frontBlocked() {
+    int frontRead = ultrasonicFront.read();
+    print(" front:"); print(frontRead);
+}
+
+inline bool rightBlocked() {
+    int rightRead = ultrasonicRight.read();
+    print(",right:"); print(rightRead);
+}
+
+inline bool leftBlocked() {
+    int leftRead = ultrasonicLeft.read();
+    print(",left:"); print(leftRead);
+}
+
+inline void rightWheelForward() {
+    digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+}
+
+inline void leftWheelForward() {
+    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+    digitalWrite(LEFT_MOTOR_PIN2, LOW);
+}
+
+inline void rightWheelBackward() {
+    digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+}
+
+inline void leftWheelBackward() {
+    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+    digitalWrite(LEFT_MOTOR_PIN2, LOW);
+}
+
+inline void leftWheelSpeed(uint8_t spd) {
+    analogWrite(LEFT_MOTOR_SPD_PIN, spd);
+}
+
+inline void rightWheelSpeed(uint8_t spd) {
+    analogWrite(RIGHT_MOTOR_SPD_PIN, spd);
+}
+
+inline void resetSpeed() {
+    leftWheelSpeed(LEFT_MOTOR_SPD);
+    rightWheelSpeed(RIGHT_MOTOR_SPD);
 }
 
 inline void moveForward() {
-    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
-    digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+    rightWheelForward();
+    leftWheelForward();
 }
 
 inline void turnRight() {
-    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
+    rightWheelBackward();
+    leftWheelForward();
 }
 
 inline void turnLeft() {
-   digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
+    rightWheelForward();
+    leftWheelBackward();
 }
 
 inline void stopMotors() {
     digitalWrite(LEFT_MOTOR_PIN1, LOW);
-    digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+    digitalWrite(LEFT_MOTOR_PIN2, LOW);
+
+    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
 void setup() {
-    Serial.begin(9600);
+    serialBegin(9600);
 
     pinMode(LEFT_MOTOR_PIN1, OUTPUT);
     pinMode(LEFT_MOTOR_PIN2, OUTPUT);
     pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
     pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
-    digitalWrite(LEFT_MOTOR_PIN2, LOW);
-    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+
+    resetSpeed();
 }
 
 void loop() {
+    /*DEBUG*/
+    rightWheelForward();
+    return;
+
+
     if (!toStart) {
         toStart = digitalRead(START_BUTTON_PIN);
         return;
@@ -77,17 +146,9 @@ void loop() {
 
     int startTime = millis();
 
-    int frontRead = ultrasonicFront.read();
-    int rightRead = ultrasonicRight.read();
-    int leftRead = ultrasonicLeft.read();
-
-    Serial.print("front:"); Serial.print(frontRead);
-    Serial.print(",left:"); Serial.print(leftRead);
-    Serial.print(",right:"); Serial.print(rightRead);
-
     switch (currentState) {
         case State::TAKE_DECISION: {
-            maze.updateAdjacentWalls(blocked(frontRead), blocked(rightRead), blocked(leftRead));
+            maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
             maze.updateCellsValues();
             Maze::Direction dir = maze.whereToGo(); // updates position
             maze.updateOrientation(dir);
@@ -122,7 +183,7 @@ void loop() {
               stateTime = (uint16_t) StateTime::NONE;
               break;
           }
-            while (blocked(frontRead)) {stopMotors();}
+            while (frontBlocked()) {stopMotors();}
             moveForward();
           break;
         }
@@ -142,4 +203,6 @@ void loop() {
     }
 
     stateTime -= millis() - startTime;
+
+    print("\n");
 }
