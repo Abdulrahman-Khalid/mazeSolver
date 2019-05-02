@@ -6,3 +6,6 @@ compile: src/* lib/* include/*
 
 upload:
 	sudo ${PIO} run -e ${PLATFORM} -t upload
+
+installPIO:
+	sudo python -c "`curl -fsSL https://raw.githubusercontent.com/platformio/platformio/develop/scripts/get-platformio.py`"
