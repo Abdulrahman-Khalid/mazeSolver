@@ -12,6 +12,10 @@
 #ifndef DEBUG
 #define print(n)
 #define serialBegin(n)
+#elif NATIVE=1
+#include <stdio.h>
+#define print(n) printf(n)
+#define serialBegin(n) 
 #else
 #define print(n) Serial.print(n)
 #define serialBegin(n) Serial.begin(n)
@@ -27,14 +31,13 @@
 #define RIGHT_MOTOR_PIN1 12
 #define RIGHT_MOTOR_PIN2 13
 #define RIGHT_MOTOR_SPD_PIN 9
-#define RIGHT_MOTOR_SPD 200
+#define RIGHT_MOTOR_SPD 220
 
 #define START_BUTTON_PIN 1
 
-
 Ultrasonic ultrasonicFront(2, 6);
-Ultrasonic ultrasonicLeft(4, 7);
-Ultrasonic ultrasonicRight(8, 5);
+Ultrasonic ultrasonicLeft(8, 5);
+Ultrasonic ultrasonicRight(4, 7);
 
 Maze maze;
 
@@ -52,18 +55,24 @@ uint16_t stateTime = (uint16_t) StateTime::NONE;
 bool toStart = true; // TODO, setup push button
 
 inline bool frontBlocked() {
-    int frontRead = ultrasonicFront.read();
-    print(" front:"); print(frontRead);
+    int d;
+    while (d = ultrasonicFront.read() > 100) print("front: error!");
+    print(" front:"); print(d);
+
+    return d < 40;
 }
 
 inline bool rightBlocked() {
-    int rightRead = ultrasonicRight.read();
-    print(",right:"); print(rightRead);
+    int d;
+    while (d = ultrasonicRight.read()) print("right: error1");
+    print(",right:"); print(d);
+    return true;
 }
 
 inline bool leftBlocked() {
-    int leftRead = ultrasonicLeft.read();
-    print(",left:"); print(leftRead);
+    int d = ultrasonicLeft.read();
+    print(",left:"); print(d);
+    return true;
 }
 
 inline void rightWheelForward() {
@@ -77,26 +86,22 @@ inline void leftWheelForward() {
 }
 
 inline void rightWheelBackward() {
-    digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
-    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN2, HIGH);
 }
 
 inline void leftWheelBackward() {
-    digitalWrite(LEFT_MOTOR_PIN1, HIGH);
-    digitalWrite(LEFT_MOTOR_PIN2, LOW);
+    digitalWrite(LEFT_MOTOR_PIN1, LOW);
+    digitalWrite(LEFT_MOTOR_PIN2, HIGH);
 }
 
-inline void leftWheelSpeed(uint8_t spd) {
-    analogWrite(LEFT_MOTOR_SPD_PIN, spd);
-}
-
-inline void rightWheelSpeed(uint8_t spd) {
-    analogWrite(RIGHT_MOTOR_SPD_PIN, spd);
+inline void speed(uint8_t left, uint8_t right) {
+    analogWrite(LEFT_MOTOR_SPD_PIN, left);
+    analogWrite(RIGHT_MOTOR_SPD_PIN, right);
 }
 
 inline void resetSpeed() {
-    leftWheelSpeed(LEFT_MOTOR_SPD);
-    rightWheelSpeed(RIGHT_MOTOR_SPD);
+    speed(LEFT_MOTOR_SPD, RIGHT_MOTOR_SPD);
 }
 
 inline void moveForward() {
@@ -129,13 +134,27 @@ void setup() {
     pinMode(LEFT_MOTOR_PIN2, OUTPUT);
     pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
     pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
+    pinMode(LEFT_MOTOR_SPD_PIN, OUTPUT);
+    pinMode(RIGHT_MOTOR_SPD_PIN, OUTPUT);
 
     resetSpeed();
 }
 
 void loop() {
     /*DEBUG*/
-    rightWheelForward();
+
+    // rightWheelForward();
+    // rightWheelBackward();
+    // leftWheelForward();
+    // leftWheelBackward();
+    // moveForward();
+    // turnLeft();
+    // turnRight();
+
+    frontBlocked();
+    rightBlocked();
+    leftBlocked();
+    print('\n');
     return;
 
 
