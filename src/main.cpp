@@ -6,9 +6,9 @@
 #include <Energia.h>
 #elif UNO == 1
 #include <Arduino.h>
+#include <Ultrasonic.h>
 #endif
 
-#include <Ultrasonic.h>
 #include "Maze.h"
 
 #define LEFT_MOTOR_PIN1 10
