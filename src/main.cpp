@@ -12,7 +12,7 @@
 #ifndef DEBUG
 #define print(n)
 #define serialBegin(n)
-#elif NATIVE=1
+#elif NATIVE == 1
 #include <stdio.h>
 #define print(n) printf(n)
 #define serialBegin(n) 
@@ -35,6 +35,8 @@
 
 #define START_BUTTON_PIN 1
 
+#define MAX_US_READ 200
+
 Ultrasonic ultrasonicFront(2, 6);
 Ultrasonic ultrasonicLeft(8, 5);
 Ultrasonic ultrasonicRight(4, 7);
@@ -55,24 +57,24 @@ uint16_t stateTime = (uint16_t) StateTime::NONE;
 bool toStart = true; // TODO, setup push button
 
 inline bool frontBlocked() {
-    int d;
-    while (d = ultrasonicFront.read() > 100) print("front: error!");
+    int d = ultrasonicFront.read();
     print(" front:"); print(d);
 
-    return d < 40;
+    return d <= 20;
 }
 
 inline bool rightBlocked() {
-    int d;
-    while (d = ultrasonicRight.read()) print("right: error1");
+    int d = ultrasonicRight.read();
     print(",right:"); print(d);
-    return true;
+
+    return d <= 30;
 }
 
 inline bool leftBlocked() {
     int d = ultrasonicLeft.read();
     print(",left:"); print(d);
-    return true;
+    
+    return d <= 20;
 }
 
 inline void rightWheelForward() {
@@ -151,9 +153,11 @@ void loop() {
     // turnLeft();
     // turnRight();
 
-    frontBlocked();
-    rightBlocked();
-    leftBlocked();
+    // frontBlocked();
+    // rightBlocked();
+    // leftBlocked();
+
+    
     print('\n');
     return;
 
