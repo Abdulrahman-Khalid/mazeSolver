@@ -125,7 +125,7 @@ inline void stopMotors() {
     digitalWrite(LEFT_MOTOR_PIN1, LOW);
     digitalWrite(LEFT_MOTOR_PIN2, LOW);
 
-    digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+    digitalWrite(RIGHT_MOTOR_PIN1, LOW);
     digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
@@ -157,7 +157,7 @@ void loop() {
     // rightBlocked();
     // leftBlocked();
 
-    
+    moveForward();
     print('\n');
     return;
 
