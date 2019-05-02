@@ -10,16 +10,16 @@
 #endif
 
 #ifndef DEBUG
+#define printv(n)
 #define print(n)
 #define serialBegin(n)
-#define printv(n)
 #elif NATIVE == 1
 #include <stdio.h>
 #define print(n) printf(n)
 #define serialBegin(n) 
 #else
 #define print(n) Serial.print(n)
-#define printv(n) Serial.print(#n"=");Serial.print(n);Serial.print(",")
+#define printv(n) print(#n"=");print(n);print(",")
 #define serialBegin(n) Serial.begin(n)
 #endif
 
@@ -54,7 +54,7 @@ enum class StateTime : uint16_t {
     NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
 };
 
-uint16_t stateTime = (uint16_t) StateTime::NONE;
+int32_t stateTime = (int32_t) StateTime::NONE;
 
 bool toStart = true; // TODO, setup push button
 
@@ -152,22 +152,28 @@ void loop() {
 
     int startTime = millis();
 
-    printv(startTime);
-    printv(currentState);
+    printv(stateTime);
+    printv((int)currentState);
 
     switch (currentState) {
         case State::TAKE_DECISION: {
             print(":TAKE_DECISION:");
 
+            print(":1:");
             maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
+            print(":2:");
             maze.updateCellsValues();
+            print(":3:");
             Maze::Direction dir = maze.whereToGo(); // updates position
+            print(":4:");
             maze.updateOrientation(dir);
+            print(":5:");
 
-            printv(dir);
+            printv((int)dir);
             printv(maze.position.x);
             printv(maze.position.y);
-            printv(maze.orientation);
+
+            printv((int)maze.orientation);
 
             if (maze.finished() || dir == Maze::STOP) {
                 currentState = State::FINISHED;
@@ -201,10 +207,10 @@ void loop() {
                 stateTime = (uint16_t) StateTime::NONE;
 
                 print(":END:MOVE_FORWARD:");
-                delay(1000); // TODO
                 break;
             }
-            while (frontBlocked()) {stopMotors();}
+
+            while (frontBlocked()) {stopMotors(); startTime = millis();}
             moveForward();
             break;
         }
