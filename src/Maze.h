@@ -25,9 +25,9 @@ public:
 
     enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
 
-    Maze () :position({START_X, START_Y}), orientation(START_ORIENT), 
+    Maze () :position(START_X, START_Y), orientation(START_ORIENT), 
             q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH) {}
-
+ 
     void init() {
         for (int i = 0; i < MAZE_LENGTH; i++) {
             for (int j = 0; j < MAZE_HEIGHT; j++) {
@@ -40,7 +40,6 @@ public:
                 
                 cells[i][j].visited = false;
             }
-            print("\n");
         }
     }
 
@@ -63,13 +62,13 @@ public:
 
         if (c.right == 0 && cells[position.x+1][position.y].value <= minvalue) {
             minvalue = cells[position.x+1][position.y].value;
-            dir = LEFT;
+            dir = RIGHT;
             newPos = Position(position.x+1, position.y);
         }
 
         if (c.left == 0 && cells[position.x-1][position.y].value <= minvalue) {
             minvalue = cells[position.x-1][position.y].value;
-            dir = RIGHT;
+            dir = LEFT;
             newPos = Position(position.x-1, position.y);
 
             assert(newPos.x != 255);
@@ -134,12 +133,12 @@ public:
 
         if (position.x+1 < MAZE_LENGTH) cells[position.x+1][position.y].left = c.right;
         if (position.x > 0) cells[position.x-1][position.y].right = c.left;
-        if (position.y+1 < MAZE_HEIGHT) cells[position.x][position.y+1].down = c.up;
-        if (position.y > 0) cells[position.x][position.y-1].up = c.down;
+        if (position.y+1 < MAZE_HEIGHT) cells[position.x][position.y+1].up = c.down;
+        if (position.y > 0) cells[position.x][position.y-1].down = c.up;
     }
 
     void updateCellsValues() {
-        Position p = {TARGET_X, TARGET_Y};
+        Position p(TARGET_X, TARGET_Y);
         
         q.flush();
         assert(q.isEmpty());
@@ -148,17 +147,18 @@ public:
         assert(result);
 
         while (q.pop(&p)) {
+            auto& c = cells[p.x][p.y];
             Position p2(0, 0);
 
-            if (cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
+            if (c.right == 0 && !cells[p.x+1][p.y].visited) {
                 assert(p.x != MAZE_LENGTH-1);
 
                 p2 = Position(p.x + 1, p.y);
                 q.push(&p2);
-                cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
+                cells[p.x+1][p.y].value = c.value + 1;
             }
 
-            if (cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
+            if (c.left == 0 && !cells[p.x-1][p.y].visited) {
                 assert(p.x != 0);
 
                 p2 = Position(p.x - 1, p.y);
@@ -166,18 +166,18 @@ public:
                 assert(p2.x != 255);
 
                 q.push(&p2);
-                cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
+                cells[p.x-1][p.y].value = c.value + 1;
             }
 
-            if (cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
+            if (c.down == 0 && !cells[p.x][p.y+1].visited) {
                 assert(p.y != MAZE_HEIGHT-1);
 
                 p2 = Position(p.x, p.y + 1);
                 q.push(&p2);
-                cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
+                cells[p.x][p.y+1].value = c.value + 1;
             }
 
-            if (cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
+            if (c.up == 0 && !cells[p.x][p.y-1].visited) {
                 assert(p.y != 0);
 
                 p2 = Position(p.x, p.y - 1);
@@ -185,10 +185,10 @@ public:
                 assert(p2.y != 255);
 
                 q.push(&p2);
-                cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
+                cells[p.x][p.y-1].value = c.value + 1;
             }
 
-            cells[p.x][p.y].visited = true;
+            c.visited = true;
         }
 
         for (int i = 0; i < MAZE_LENGTH; i++) {

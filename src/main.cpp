@@ -10,7 +10,16 @@ enum class State : uint8_t {
     TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
 };
 
-State currentState = State::TAKE_DECISION;
+State currentState;
+
+// time that each state takes in millis
+enum class StateTime : uint16_t {
+    NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
+};
+
+int32_t stateTime = 0;
+
+bool toStart;
 
 inline void printState() {
     print("state:");
@@ -48,57 +57,56 @@ inline void printOrientation(Maze::Orientation o) {
     }
 }
 
-// time that each state takes in millis
-enum class StateTime : uint16_t {
-    NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
+#ifdef TEST
+bool sensorsReadings[4*3] = {
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 0,
+    0, 0, 0
 };
 
-int32_t stateTime = 0;
+int sensI;
 
-bool toStart = true; // TODO, setup push button
+inline bool frontBlocked() {
+    return sensorsReadings[sensI+1];
+}
 
-#ifndef TEST
-    inline bool frontBlocked() {
-        static Ultrasonic ultrasonicFront(2, 6);
-        int front = ultrasonicFront.read();
-        printv(front);
-        return front <= 20;
+inline bool rightBlocked() {
+    return sensorsReadings[sensI+2];
+}
+
+inline bool leftBlocked() {
+    return sensorsReadings[sensI];
+}
+
+void advanceTest() {
+    sensI += 3;
+    if (sensI >= sizeof sensorsReadings) {
+        print("\nTEST FINISHED\n");
+        sensI = 0;
     }
-
-    inline bool rightBlocked() {
-        static Ultrasonic ultrasonicRight(4, 7);
-        int right = ultrasonicRight.read();
-        printv(right);
-        return right <= 30;
-    }
-
-    inline bool leftBlocked() {
-        static Ultrasonic ultrasonicLeft(8, 5);
-        int left = ultrasonicLeft.read();
-        printv(left);
-        return left <= 20;
-    }
+}
 #else
-    bool sensorsReadings[4*3] = {
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 0,
-        0, 0, 0
-    };
+inline bool frontBlocked() {
+    static Ultrasonic ultrasonicFront(2, 6);
+    int front = ultrasonicFront.read();
+    printv(front);
+    return front <= 20;
+}
 
-    int sensI = 0;
+inline bool rightBlocked() {
+    static Ultrasonic ultrasonicRight(4, 7);
+    int right = ultrasonicRight.read();
+    printv(right);
+    return right <= 30;
+}
 
-    inline bool frontBlocked() {
-        return sensorsReadings[sensI+1];
-    }
-
-    inline bool rightBlocked() {
-        return sensorsReadings[sensI+2];
-    }
-
-    inline bool leftBlocked() {
-        return sensorsReadings[sensI];
-    }
+inline bool leftBlocked() {
+    static Ultrasonic ultrasonicLeft(8, 5);
+    int left = ultrasonicLeft.read();
+    printv(left);
+    return left <= 20;
+}
 #endif
 
 
@@ -154,10 +162,30 @@ inline void stopMotors() {
     digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
+void reset() {
+    print("resetting..\n");
+
+    resetSpeed();
+
+    currentState = State::TAKE_DECISION;
+    stateTime = 0;
+    toStart = false;
+    stateTime = 0;
+    currentState = State::TAKE_DECISION;
+    maze.position = Maze::Position(START_X, START_Y);
+    maze.orientation = START_ORIENT;
+
+    #ifdef TEST
+    sensI = 0;
+    #endif
+
+    print("reset finished\n");
+}
+
 void setup() {
-#ifdef SERIAL
+    #ifdef SERIAL
     Serial.begin(9600);
-#endif
+    #endif
 
     print("started setup\n");
 
@@ -168,64 +196,75 @@ void setup() {
     pinMode(LEFT_MOTOR_SPD_PIN, OUTPUT);
     pinMode(RIGHT_MOTOR_SPD_PIN, OUTPUT);
 
-    resetSpeed();
-
+    reset();
     maze.init();
 
     print("ended setup\n");
 
     delay(2000);
     print("started loop\n");
+
+    toStart  = true; // TODO, setup push button
 }
 
 void loop() {
     if (!toStart) {
         toStart = digitalRead(START_BUTTON_PIN);
-        return;
+
+        #ifdef SERIAL
+        toStart = toStart || Serial.read() != -1;
+        #endif
+
+        if (toStart) {
+            reset();
+        } else {
+            return;
+        }
     }
 
     int startTime = millis();
 
-#ifdef TEST
+    #ifdef TEST
     stateTime = 0;
-#endif
+    #endif
 
     switch (currentState) {
         case State::TAKE_DECISION: {
-            print("\n:BEFORE_TAKE_DECISION:"); {
+            print(":TAKE_DECISION: :BEFORE:"); {
                 auto &x = maze.position.x, &y = maze.position.y;
                 printv(x);
                 printv(y);
-
                 printOrientation(maze.orientation);
+            }
+
+            if (maze.finished()) {
+                print("\n:FINISHED::END:\n");
+
+                currentState = State::FINISHED;
+                toStart = false; 
+                break;
             }
 
             auto f = frontBlocked(), r = rightBlocked(), l = leftBlocked();
             maze.updateAdjacentWalls(f, r, l);
 
-#ifdef TEST
-            if (sensI == 4*3) halt();
-            sensI += 3;
-#endif
+            #ifdef TEST
+            advanceTest();
+            #endif
 
             maze.updateCellsValues();
             Maze::Direction absDir = maze.whereToGo(); // updates position
             Maze::Direction relativeDir = maze.calcRelativeDir(absDir);
             maze.orientation = maze.calcOrientation(relativeDir);
 
-            print("  :AFTER_TAKE_DECISION:"); 
+            print(" :AFTER:"); 
 
             if (absDir == Maze::STOP) {
                 print(":STOPED:");
-                
+
                 stopMotors();
                 halt();
-            } else if (maze.finished()) {
-                print(":FINISHED:");
-
-                currentState = State::FINISHED;
-                toStart = false;
-            } else if (relativeDir == Maze::FRONT) {
+            }  else if (relativeDir == Maze::FRONT) {
                 print(":MOVE_FORWARD:");
 
                 moveForward();
@@ -254,19 +293,14 @@ void loop() {
             auto &x = maze.position.x, &y = maze.position.y;
             printv(x);
             printv(y);
-            
             printOrientation(maze.orientation);
-
             printv(l);
             printv(f);
             printv(r);
-
             auto direction = int(relativeDir);
             printv(direction);
-
             printv(stateTime);
-
-            print("\n");
+            print(":END:\n");
 
             break;
         }
@@ -278,15 +312,15 @@ void loop() {
                 currentState = State::TAKE_DECISION;
                 stateTime = (int32_t) StateTime::NONE;
 
-                print(":END:");
+                print(":END:\n");
                 break;
             }
 
-#ifndef TEST
+            #ifndef TEST
             while (frontBlocked()) {stopMotors(); startTime = millis();}
-#endif
-
             moveForward();
+            #endif
+
             break;
         }
 
@@ -295,7 +329,7 @@ void loop() {
         case State::TURN_LEFT:  {
             print(":TURN_*:");
             if (stateTime <= 0) {
-                print(":END:");
+                print(":END:\n");
 
                 moveForward();
                 currentState = State::MOVE_FORWARD;

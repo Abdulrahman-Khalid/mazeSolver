@@ -52,4 +52,4 @@
 
 #define START_X 0
 #define START_Y 0
-#define START_ORIENT SOUTH
+#define START_ORIENT Maze::SOUTH
