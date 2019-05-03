@@ -53,7 +53,7 @@ public:
         Position newPos = position;
         auto& c = cells[position.x][position.y];
 
-        if (c.up == 0 && cells[position.x][position.y-1].value < minvalue) {
+        if (c.up == 0 && cells[position.x][position.y-1].value <= minvalue) {
             minvalue = cells[position.x][position.y-1].value;
             dir = FRONT;
             newPos = Position(position.x, position.y-1);
@@ -61,13 +61,13 @@ public:
             assert(newPos.y != 255);
         }
 
-        if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
+        if (c.right == 0 && cells[position.x+1][position.y].value <= minvalue) {
             minvalue = cells[position.x+1][position.y].value;
             dir = LEFT;
             newPos = Position(position.x+1, position.y);
         }
 
-        if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
+        if (c.left == 0 && cells[position.x-1][position.y].value <= minvalue) {
             minvalue = cells[position.x-1][position.y].value;
             dir = RIGHT;
             newPos = Position(position.x-1, position.y);
@@ -75,7 +75,7 @@ public:
             assert(newPos.x != 255);
         }
 
-        if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
+        if (c.down == 0 && cells[position.x][position.y+1].value <= minvalue) {
             minvalue = cells[position.x][position.y+1].value;
             dir = BACK;
             newPos = Position(position.x, position.y+1);
