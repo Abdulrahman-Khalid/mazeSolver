@@ -18,7 +18,11 @@ public:
     Cell cells[MAZE_LENGTH][MAZE_HEIGHT];
     Queue q;
 
-    struct Position { uint8_t x, y; } position;
+    struct Position { 
+        uint8_t x, y; 
+        Position(uint8_t x, uint8_t y): x(x), y(y) {}
+    } position;
+
     enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
 
     Maze () :position({START_X, START_Y}), orientation(START_ORIENT), 
@@ -52,25 +56,25 @@ public:
         if (c.up == 0 && cells[position.x][position.y-1].value < minvalue) {
             minvalue = cells[position.x][position.y-1].value;
             dir = FRONT;
-            newPos = {position.x, uint8_t(position.y-1)};
+            newPos = Position(position.x, position.y-1);
         }
 
         if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
             minvalue = cells[position.x+1][position.y].value;
             dir = LEFT;
-            newPos = {uint8_t(position.x+1), position.y};
+            newPos = Position(position.x+1, position.y);
         }
 
         if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
             minvalue = cells[position.x-1][position.y].value;
             dir = RIGHT;
-            newPos = {uint8_t(position.x-1), position.y};
+            newPos = Position(position.x-1, position.y);
         }
 
         if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
             minvalue = cells[position.x][position.y+1].value;
             dir = BACK;
-            newPos = {position.x, uint8_t(position.y+1)};
+            newPos = Position(position.x, position.y+1);
         }
 
         position = newPos;
@@ -131,29 +135,32 @@ public:
         q.push(&p);
 
         while (q.pop(&p)) {
-            Position p2;
+            Position p2(0, 0);
 
             if (p.x != MAZE_LENGTH-1 && cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
-                p2 = {uint8_t(p.x + 1), p.y};
+                p2 = Position(p.x + 1, p.y);
                 q.push(&p2);
                 cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
             if (p.x != 0 && cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
-                p2 = {uint8_t(p.x - 1), p.y};
-                if (p2.x == 255) halt();
+                p2 = Position(p.x - 1, p.y);
+
+                assert(p.x != 0);
+                assert(p2.x != 255);
+
                 q.push(&p2);
                 cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
             if (p.y != MAZE_HEIGHT-1 && cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
-                p2 = {p.x, uint8_t(p.y + 1)};
+                p2 = Position(p.x, p.y + 1);
                 q.push(&p2);
                 cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
             }
 
             if (p.y != 0 && cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
-                p2 = {p.x, uint8_t(p.y - 1)};
+                p2 = Position(p.x, p.y - 1);
                 q.push(&p2);
                 cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
             }

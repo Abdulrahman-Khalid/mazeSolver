@@ -32,6 +32,22 @@ inline void printState() {
     }
 }
 
+inline void printOrientation(Maze::Orientation o) {
+    print("o=");
+
+    switch (o) {
+        case Maze::NORTH:
+            print("NORTH,");break;
+        case Maze::SOUTH:
+            print("SOUTH,");break;
+        case Maze::WEST:
+            print("WEST,");break;
+        case Maze::EAST:
+            print("EAST,");break;
+        default: break;
+    }
+}
+
 // time that each state takes in millis
 enum class StateTime : uint16_t {
     NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
@@ -64,7 +80,7 @@ bool toStart = true; // TODO, setup push button
     }
 #else
     bool sensorsReadings[4*3] = {
-        0, 0, 1,
+        1, 0, 0,
         0, 1, 0,
         0, 0, 0,
         0, 0, 0
@@ -170,52 +186,85 @@ void loop() {
 
     int startTime = millis();
 
-    printState();
-    printv(stateTime);
-    printv(maze.position.x);
-    printv(maze.position.y);
-    printv((int)maze.orientation);
+#ifdef TEST
+    stateTime = 0;
+#endif
 
     switch (currentState) {
         case State::TAKE_DECISION: {
-            print(":TAKE_DECISION:");
+            print("\n:BEFORE_TAKE_DECISION:"); {
+                auto &x = maze.position.x, &y = maze.position.y;
+                printv(x);
+                printv(y);
 
-            maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
+                printOrientation(maze.orientation);
+            }
+
+            auto f = frontBlocked(), r = rightBlocked(), l = leftBlocked();
+            maze.updateAdjacentWalls(f, r, l);
+
 #ifdef TEST
+            if (sensI == 4*3) halt();
             sensI += 3;
 #endif
+
             maze.updateCellsValues();
             Maze::Direction dir = maze.whereToGo(); // updates position
             maze.orientation = maze.calcOrientation(dir);
 
-            printv((int)dir);
+            print("  :AFTER_TAKE_DECISION:"); 
 
             if (maze.finished() || dir == Maze::STOP) {
                 currentState = State::FINISHED;
                 toStart = false;
             } else if (dir == Maze::FRONT) {
+                print(":MOVE_FORWARD:");
+
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (int32_t) StateTime::MOVE;
             } else if (dir == Maze::RIGHT) {
+                print(":TURN_RIGHT:");
+
                 turnRight();
                 currentState = State::TURN_RIGHT;
                 stateTime = (int32_t) StateTime::TURN;
             } else if (dir == Maze::LEFT) {
+                print(":TURN_LEFT:");
+
                 turnLeft();
                 currentState = State::TURN_LEFT;
                 stateTime = (int32_t) StateTime::TURN;
             } else {
+                print(":TURN_180:");
+
                 turnRight();
                 currentState = State::TURN_180;
                 stateTime = (int32_t) StateTime::TURN_180;
             }
+
+            auto &x = maze.position.x, &y = maze.position.y;
+            printv(x);
+            printv(y);
+            
+            printOrientation(maze.orientation);
+
+            printv(l);
+            printv(f);
+            printv(r);
+
+            auto direction = int(dir);
+            printv(direction);
+
+            printv(stateTime);
+
+            print("\n");
+
             break;
         }
 
         case State::MOVE_FORWARD: {
             print(":MOVE_FORWARD:");
-
             if (stateTime <= 0) {
                 stopMotors();
                 currentState = State::TAKE_DECISION;
@@ -225,7 +274,10 @@ void loop() {
                 break;
             }
 
+#ifndef TEST
             while (frontBlocked()) {stopMotors(); startTime = millis();}
+#endif
+
             moveForward();
             break;
         }
@@ -234,9 +286,10 @@ void loop() {
         case State::TURN_RIGHT:
         case State::TURN_LEFT:  {
             print(":TURN_*:");
-
             if (stateTime <= 0) {
                 print(":END:");
+
+                print(":MOVE_FORWARD:");
 
                 moveForward();
                 currentState = State::MOVE_FORWARD;
@@ -249,6 +302,4 @@ void loop() {
     }
 
     stateTime -= millis() - startTime;
-
-    print("\n");
 }

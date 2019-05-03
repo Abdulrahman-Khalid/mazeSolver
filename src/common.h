@@ -24,7 +24,11 @@
     #define printv(n) print(#n"=");print(n);print(",")
 #endif
 
-#define halt() while(1)
+#ifdef TEST
+#define assert(n) do { if (!(n)) { print("\nASSERTION FAILED: "#n"\n"); print("\nHALT\n"); while(1); } } while(0)
+#endif
+
+#define halt() do { print("\nHALT\n");while(1); } while(0)
 
 #define LEFT_MOTOR_PIN1 10
 #define LEFT_MOTOR_PIN2 11
