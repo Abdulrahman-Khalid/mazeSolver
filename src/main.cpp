@@ -1,43 +1,6 @@
-#ifndef UNO
-#define UNO 1
-#endif
-
-#ifdef TIVA
-#include <Energia.h>
-#elif UNO == 1
-#include <Arduino.h>
-#include <Ultrasonic.h>
-#endif
-
-#ifndef DEBUG
-#define printv(n)
-#define print(n)
-#define serialBegin(n)
-#elif NATIVE == 1
-#include <stdio.h>
-#define print(n) printf(n)
-#define serialBegin(n) 
-#else
-#define print(n) Serial.print(n)
-#define printv(n) print(#n"=");print(n);print(",")
-#define serialBegin(n) Serial.begin(n)
-#endif
+#include "common.h"
 
 #include "Maze.h"
-
-#define LEFT_MOTOR_PIN1 10
-#define LEFT_MOTOR_PIN2 11
-#define LEFT_MOTOR_SPD_PIN 3
-#define LEFT_MOTOR_SPD 183
-
-#define RIGHT_MOTOR_PIN1 12
-#define RIGHT_MOTOR_PIN2 13
-#define RIGHT_MOTOR_SPD_PIN 9
-#define RIGHT_MOTOR_SPD 163
-
-#define START_BUTTON_PIN 1
-
-#define MAX_US_READ 200
 
 Ultrasonic ultrasonicFront(2, 6);
 Ultrasonic ultrasonicLeft(8, 5);
@@ -47,36 +10,55 @@ Maze maze;
 
 enum class State : uint8_t {
     TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
-} currentState;
+};
+
+State currentState = State::TAKE_DECISION;
+
+inline void printState() {
+    print("state:");
+
+    switch (currentState) {
+        case State::TURN_RIGHT:
+            print("TR,"); break;
+        case State::TURN_LEFT:
+            print("TL,");  break;
+        case State::TURN_180:
+            print("T180,");  break;
+        case State::MOVE_FORWARD:
+            print("F,");  break;
+        case State::TAKE_DECISION:
+            print("TD,");  break;
+        case State::FINISHED:
+            print("FIN,");  break;
+        default: break;
+    }
+}
 
 // time that each state takes in millis
 enum class StateTime : uint16_t {
     NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
 };
 
-int32_t stateTime = (int32_t) StateTime::NONE;
+int32_t stateTime = 0;
 
 bool toStart = true; // TODO, setup push button
 
 inline bool frontBlocked() {
-    int d = ultrasonicFront.read();
-    print(" front:"); print(d);
-
-    return d <= 20;
+    int front = ultrasonicFront.read();
+    printv(front);
+    return front <= 20;
 }
 
 inline bool rightBlocked() {
-    int d = ultrasonicRight.read();
-    print(",right:"); print(d);
-
-    return d <= 30;
+    int right = ultrasonicRight.read();
+    printv(right);
+    return right <= 30;
 }
 
 inline bool leftBlocked() {
-    int d = ultrasonicLeft.read();
-    print(",left:"); print(d);
-    
-    return d <= 20;
+    int left = ultrasonicLeft.read();
+    printv(left);
+    return left <= 20;
 }
 
 inline void rightWheelForward() {
@@ -132,7 +114,11 @@ inline void stopMotors() {
 }
 
 void setup() {
-    serialBegin(9600);
+#ifdef DEBUG
+    Serial.begin(9600);
+#endif
+
+    print("started setup\n");
 
     pinMode(LEFT_MOTOR_PIN1, OUTPUT);
     pinMode(LEFT_MOTOR_PIN2, OUTPUT);
@@ -142,6 +128,13 @@ void setup() {
     pinMode(RIGHT_MOTOR_SPD_PIN, OUTPUT);
 
     resetSpeed();
+
+    maze.init();
+
+    print("ended setup\n");
+
+    delay(2000);
+    print("started loop\n");
 }
 
 void loop() {
@@ -152,28 +145,22 @@ void loop() {
 
     int startTime = millis();
 
+    printState();
     printv(stateTime);
-    printv((int)currentState);
+    printv(maze.position.x);
+    printv(maze.position.y);
+    printv((int)maze.orientation);
 
     switch (currentState) {
         case State::TAKE_DECISION: {
             print(":TAKE_DECISION:");
 
-            print(":1:");
             maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
-            print(":2:");
             maze.updateCellsValues();
-            print(":3:");
             Maze::Direction dir = maze.whereToGo(); // updates position
-            print(":4:");
             maze.updateOrientation(dir);
-            print(":5:");
 
             printv((int)dir);
-            printv(maze.position.x);
-            printv(maze.position.y);
-
-            printv((int)maze.orientation);
 
             if (maze.finished() || dir == Maze::STOP) {
                 currentState = State::FINISHED;
@@ -181,19 +168,19 @@ void loop() {
             } else if (dir == Maze::FRONT) {
                 moveForward();
                 currentState = State::MOVE_FORWARD;
-                stateTime = (uint16_t) StateTime::MOVE;
+                stateTime = (int32_t) StateTime::MOVE;
             } else if (dir == Maze::RIGHT) {
                 turnRight();
                 currentState = State::TURN_RIGHT;
-                stateTime = (uint16_t) StateTime::TURN;
+                stateTime = (int32_t) StateTime::TURN;
             } else if (dir == Maze::LEFT) {
                 turnLeft();
                 currentState = State::TURN_LEFT;
-                stateTime = (uint16_t) StateTime::TURN;
+                stateTime = (int32_t) StateTime::TURN;
             } else {
                 turnRight();
                 currentState = State::TURN_180;
-                stateTime = (uint16_t) StateTime::TURN_180;
+                stateTime = (int32_t) StateTime::TURN_180;
             }
             break;
         }
@@ -204,9 +191,9 @@ void loop() {
             if (stateTime <= 0) {
                 stopMotors();
                 currentState = State::TAKE_DECISION;
-                stateTime = (uint16_t) StateTime::NONE;
+                stateTime = (int32_t) StateTime::NONE;
 
-                print(":END:MOVE_FORWARD:");
+                print(":END:");
                 break;
             }
 
@@ -221,11 +208,11 @@ void loop() {
             print(":TURN_*:");
 
             if (stateTime <= 0) {
-                print(":END:TURN_*:");
+                print(":END:");
 
                 moveForward();
                 currentState = State::MOVE_FORWARD;
-                stateTime = (uint16_t) StateTime::MOVE;
+                stateTime = (int32_t) StateTime::MOVE;
             }
             break;
         }

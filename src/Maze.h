@@ -1,17 +1,5 @@
-#include <stdint.h>
-#include <math.h>
-#include <stdio.h>
+#include "common.h"
 #include <cppQueue.h>
-
-#define MAZE_HEIGHT 3
-#define MAZE_LENGTH 2
-
-#define TARGET_X 2
-#define TARGET_Y 2
-
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT SOUTH
 
 struct Cell {
     bool right:1;
@@ -34,7 +22,9 @@ public:
     enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
 
     Maze () :position({START_X, START_Y}), orientation(START_ORIENT), 
-            q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH) {
+            q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH) {}
+
+    void init() {
         for (int i = 0; i < MAZE_LENGTH; i++) {
             for (int j = 0; j < MAZE_HEIGHT; j++) {
                 cells[i][j].value = abs(TARGET_X - i) + abs(TARGET_Y - j);
@@ -43,9 +33,10 @@ public:
                 cells[i][j].left = (i == 0);
                 cells[i][j].right = (i == MAZE_LENGTH-1);
                 cells[i][j].down = (j == MAZE_HEIGHT-1);
-
+                
                 cells[i][j].visited = false;
             }
+            print("\n");
         }
     }
 
@@ -93,35 +84,35 @@ public:
     inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {
         auto& c = cells[position.x][position.y];
 
-        switch (orientation){
+        switch (orientation) {
             case EAST: {
-                c.right = frontBlocked;
-                c.up = leftBlocked;
-                c.down = rightBlocked;
+                c.right |= frontBlocked;
+                c.up |= leftBlocked;
+                c.down |= rightBlocked;
 
                 break;
             } 
 
             case WEST: {
-                c.left = frontBlocked;
-                c.up = rightBlocked;
-                c.down = leftBlocked;
+                c.left |= frontBlocked;
+                c.up |= rightBlocked;
+                c.down |= leftBlocked;
 
                 break;
             }
 
             case SOUTH: {
-                c.right = leftBlocked;
-                c.left = rightBlocked;
-                c.down = frontBlocked;
+                c.right |= leftBlocked;
+                c.left |= rightBlocked;
+                c.down |= frontBlocked;
 
                 break;
             }
         
             default: {
-                c.right = rightBlocked;
-                c.left = leftBlocked;
-                c.up = frontBlocked;
+                c.right |= rightBlocked;
+                c.left |= leftBlocked;
+                c.up |= frontBlocked;
 
                 break;
             }
@@ -142,25 +133,26 @@ public:
         while (q.pop(&p)) {
             Position p2;
 
-            if (cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
+            if (p.x != MAZE_LENGTH-1 && cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
                 p2 = {uint8_t(p.x + 1), p.y};
                 q.push(&p2);
                 cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
+            if (p.x != 0 && cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
                 p2 = {uint8_t(p.x - 1), p.y};
+                if (p2.x == 255) halt();
                 q.push(&p2);
                 cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
+            if (p.y != MAZE_HEIGHT-1 && cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
                 p2 = {p.x, uint8_t(p.y + 1)};
                 q.push(&p2);
                 cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
             }
 
-            if (cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
+            if (p.y != 0 && cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
                 p2 = {p.x, uint8_t(p.y - 1)};
                 q.push(&p2);
                 cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
