@@ -209,29 +209,35 @@ void loop() {
 #endif
 
             maze.updateCellsValues();
-            Maze::Direction dir = maze.whereToGo(); // updates position
-            maze.orientation = maze.calcOrientation(dir);
+            Maze::Direction absDir = maze.whereToGo(); // updates position
+            Maze::Direction relativeDir = maze.calcRelativeDir(absDir);
+            maze.orientation = maze.calcOrientation(relativeDir);
 
             print("  :AFTER_TAKE_DECISION:"); 
 
-            if (maze.finished() || dir == Maze::STOP) {
+            if (absDir == Maze::STOP) {
+                print(":STOPED:");
+                
+                stopMotors();
+                halt();
+            } else if (maze.finished()) {
                 print(":FINISHED:");
 
                 currentState = State::FINISHED;
                 toStart = false;
-            } else if (dir == Maze::FRONT) {
+            } else if (relativeDir == Maze::FRONT) {
                 print(":MOVE_FORWARD:");
 
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (int32_t) StateTime::MOVE;
-            } else if (dir == Maze::RIGHT) {
+            } else if (relativeDir == Maze::RIGHT) {
                 print(":TURN_RIGHT:");
 
                 turnRight();
                 currentState = State::TURN_RIGHT;
                 stateTime = (int32_t) StateTime::TURN;
-            } else if (dir == Maze::LEFT) {
+            } else if (relativeDir == Maze::LEFT) {
                 print(":TURN_LEFT:");
 
                 turnLeft();
@@ -255,7 +261,7 @@ void loop() {
             printv(f);
             printv(r);
 
-            auto direction = int(dir);
+            auto direction = int(relativeDir);
             printv(direction);
 
             printv(stateTime);

@@ -87,8 +87,12 @@ public:
         return dir;
     }
 
-    inline Orientation calcOrientation(Direction dir) const {
-        return Orientation((orientation + dir) % 4);
+    inline Orientation calcOrientation(Direction relativeDir) const {
+        return Orientation((orientation + relativeDir) % 4);
+    }
+
+    inline Direction calcRelativeDir(Direction absDir) const {
+        return Direction((orientation + absDir) % 4);
     }
 
     inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {

@@ -25,7 +25,7 @@
 #endif
 
 #ifdef TEST
-#define assert(n) do { if (!(n)) { print("\nASSERTION FAILED: "#n"\n"); print("\nHALT\n"); while(1); } } while(0)
+#define assert(n) do { if (!(n)) { print("\nASSERTION FAILED: " __FILE__ ":"); print(__LINE__); print(":   "#n"\n"); print("\nHALT\n"); while(1); } } while(0)
 #else
 #define assert(n)
 #endif
