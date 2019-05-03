@@ -215,6 +215,8 @@ void loop() {
             print("  :AFTER_TAKE_DECISION:"); 
 
             if (maze.finished() || dir == Maze::STOP) {
+                print(":FINISHED:");
+
                 currentState = State::FINISHED;
                 toStart = false;
             } else if (dir == Maze::FRONT) {
@@ -289,8 +291,6 @@ void loop() {
             if (stateTime <= 0) {
                 print(":END:");
 
-                print(":MOVE_FORWARD:");
-
                 moveForward();
                 currentState = State::MOVE_FORWARD;
                 stateTime = (int32_t) StateTime::MOVE;
@@ -298,7 +298,7 @@ void loop() {
             break;
         }
 
-        default: stopMotors(); print(":FINISHED:");
+        default: stopMotors();
     }
 
     stateTime -= millis() - startTime;

@@ -26,6 +26,8 @@
 
 #ifdef TEST
 #define assert(n) do { if (!(n)) { print("\nASSERTION FAILED: "#n"\n"); print("\nHALT\n"); while(1); } } while(0)
+#else
+#define assert(n)
 #endif
 
 #define halt() do { print("\nHALT\n");while(1); } while(0)

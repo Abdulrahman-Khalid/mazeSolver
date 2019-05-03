@@ -57,6 +57,8 @@ public:
             minvalue = cells[position.x][position.y-1].value;
             dir = FRONT;
             newPos = Position(position.x, position.y-1);
+
+            assert(newPos.y != 255);
         }
 
         if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
@@ -69,6 +71,8 @@ public:
             minvalue = cells[position.x-1][position.y].value;
             dir = RIGHT;
             newPos = Position(position.x-1, position.y);
+
+            assert(newPos.x != 255);
         }
 
         if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
@@ -76,6 +80,8 @@ public:
             dir = BACK;
             newPos = Position(position.x, position.y+1);
         }
+
+        assert(newPos.x < MAZE_LENGTH && newPos.y < MAZE_HEIGHT);
 
         position = newPos;
         return dir;
@@ -132,35 +138,48 @@ public:
         Position p = {TARGET_X, TARGET_Y};
         
         q.flush();
-        q.push(&p);
+        assert(q.isEmpty());
+
+        auto result = q.push(&p);
+        assert(result);
 
         while (q.pop(&p)) {
             Position p2(0, 0);
 
-            if (p.x != MAZE_LENGTH-1 && cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
+            if (cells[p.x][p.y].right == 0 && !cells[p.x+1][p.y].visited) {
+                assert(p.x != MAZE_LENGTH-1);
+
                 p2 = Position(p.x + 1, p.y);
                 q.push(&p2);
                 cells[p.x+1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (p.x != 0 && cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
+            if (cells[p.x][p.y].left == 0 && !cells[p.x-1][p.y].visited) {
+                assert(p.x != 0);
+
                 p2 = Position(p.x - 1, p.y);
 
-                assert(p.x != 0);
                 assert(p2.x != 255);
 
                 q.push(&p2);
                 cells[p.x-1][p.y].value = cells[p.x][p.y].value + 1;
             }
 
-            if (p.y != MAZE_HEIGHT-1 && cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
+            if (cells[p.x][p.y].down == 0 && !cells[p.x][p.y+1].visited) {
+                assert(p.y != MAZE_HEIGHT-1);
+
                 p2 = Position(p.x, p.y + 1);
                 q.push(&p2);
                 cells[p.x][p.y+1].value = cells[p.x][p.y].value + 1;
             }
 
-            if (p.y != 0 && cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
+            if (cells[p.x][p.y].up == 0 && !cells[p.x][p.y-1].visited) {
+                assert(p.y != 0);
+
                 p2 = Position(p.x, p.y - 1);
+
+                assert(p2.y != 255);
+
                 q.push(&p2);
                 cells[p.x][p.y-1].value = cells[p.x][p.y].value + 1;
             }
