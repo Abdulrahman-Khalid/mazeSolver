@@ -1,10 +1,8 @@
 #include "common.h"
 
-#include "Maze.h"
+#define TEST
 
-Ultrasonic ultrasonicFront(2, 6);
-Ultrasonic ultrasonicLeft(8, 5);
-Ultrasonic ultrasonicRight(4, 7);
+#include "Maze.h"
 
 Maze maze;
 
@@ -43,23 +41,50 @@ int32_t stateTime = 0;
 
 bool toStart = true; // TODO, setup push button
 
-inline bool frontBlocked() {
-    int front = ultrasonicFront.read();
-    printv(front);
-    return front <= 20;
-}
+#ifndef TEST
+    inline bool frontBlocked() {
+        static Ultrasonic ultrasonicFront(2, 6);
+        int front = ultrasonicFront.read();
+        printv(front);
+        return front <= 20;
+    }
 
-inline bool rightBlocked() {
-    int right = ultrasonicRight.read();
-    printv(right);
-    return right <= 30;
-}
+    inline bool rightBlocked() {
+        static Ultrasonic ultrasonicRight(4, 7);
+        int right = ultrasonicRight.read();
+        printv(right);
+        return right <= 30;
+    }
 
-inline bool leftBlocked() {
-    int left = ultrasonicLeft.read();
-    printv(left);
-    return left <= 20;
-}
+    inline bool leftBlocked() {
+        static Ultrasonic ultrasonicLeft(8, 5);
+        int left = ultrasonicLeft.read();
+        printv(left);
+        return left <= 20;
+    }
+#else
+    bool sensorsReadings[4*3] = {
+        0, 0, 1,
+        0, 1, 0,
+        0, 0, 0,
+        0, 0, 0
+    };
+
+    int sensI = 0;
+
+    inline bool frontBlocked() {
+        return sensorsReadings[sensI+1];
+    }
+
+    inline bool rightBlocked() {
+        return sensorsReadings[sensI+2];
+    }
+
+    inline bool leftBlocked() {
+        return sensorsReadings[sensI];
+    }
+#endif
+
 
 inline void rightWheelForward() {
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
@@ -114,7 +139,7 @@ inline void stopMotors() {
 }
 
 void setup() {
-#ifdef DEBUG
+#ifdef SERIAL
     Serial.begin(9600);
 #endif
 
@@ -156,6 +181,9 @@ void loop() {
             print(":TAKE_DECISION:");
 
             maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
+#ifdef TEST
+            sensI += 3;
+#endif
             maze.updateCellsValues();
             Maze::Direction dir = maze.whereToGo(); // updates position
             maze.orientation = maze.calcOrientation(dir);

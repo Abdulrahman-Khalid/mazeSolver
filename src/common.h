@@ -12,7 +12,7 @@
 #include <Ultrasonic.h>
 #endif
 
-#ifndef DEBUG
+#ifndef SERIAL
     #define printv(n)
     #define print(n)
 #elif NATIVE == 1
