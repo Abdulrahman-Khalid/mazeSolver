@@ -158,7 +158,7 @@ void loop() {
             maze.updateAdjacentWalls(frontBlocked(), rightBlocked(), leftBlocked());
             maze.updateCellsValues();
             Maze::Direction dir = maze.whereToGo(); // updates position
-            maze.updateOrientation(dir);
+            maze.orientation = maze.calcOrientation(dir);
 
             printv((int)dir);
 

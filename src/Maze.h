@@ -57,13 +57,13 @@ public:
 
         if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
             minvalue = cells[position.x+1][position.y].value;
-            dir = RIGHT;
+            dir = LEFT;
             newPos = {uint8_t(position.x+1), position.y};
         }
 
         if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
             minvalue = cells[position.x-1][position.y].value;
-            dir = LEFT;
+            dir = RIGHT;
             newPos = {uint8_t(position.x-1), position.y};
         }
 
@@ -77,8 +77,8 @@ public:
         return dir;
     }
 
-    inline void updateOrientation(Direction dir) {
-        orientation = Orientation((orientation + dir) & 0b11);
+    inline Orientation calcOrientation(Direction dir) const {
+        return Orientation((orientation + dir) % 4);
     }
 
     inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {
