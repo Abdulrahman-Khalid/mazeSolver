@@ -9,7 +9,7 @@ upload:
 	sudo ${PIO} run -e ${ENV} -t upload
 
 monitor:
-	sudo ${PIO} device monitor -b ${BAUD} -e ${ENV} -p /dev/ttyACM0
+	sudo ${PIO} device monitor -b ${BAUD} -e ${ENV}
 
 testing:
 	${PIO} run -e ${ENV} -t test

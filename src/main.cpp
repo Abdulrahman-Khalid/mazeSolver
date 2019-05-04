@@ -1,5 +1,5 @@
-#define TEST
-#define TEST_CASE 5
+// #define TEST
+// #define TEST_CASE 5
 
 #include "common.h"
 #include "Maze.h"
@@ -78,11 +78,18 @@ inline void printOrientation(Maze::Orientation o) {
         sensI %= sizeof sensorsReadings;
     }
 #else
+    static Ultrasonic ultrasonicFront(2, 6);
+
     inline bool frontBlocked() {
-        static Ultrasonic ultrasonicFront(2, 6);
         int front = ultrasonicFront.read();
         printv(front);
         return front <= 20;
+    }
+
+    inline bool frontBlockedTight() {
+        int front = ultrasonicFront.read();
+        printv(front);
+        return front <= 5;
     }
 
     inline bool rightBlocked() {
@@ -311,7 +318,7 @@ void loop() {
             }
 
             #ifndef TEST
-            while (frontBlocked()) {stopMotors(); startTime = millis();}
+            while (frontBlockedTight()) {stopMotors(); startTime = millis();}
             moveForward();
             #endif
 
