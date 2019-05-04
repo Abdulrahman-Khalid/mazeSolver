@@ -1,5 +1,5 @@
 #define TEST
-#define TEST_CASE 4
+#define TEST_CASE 5
 
 #include "common.h"
 #include "Maze.h"
@@ -75,10 +75,7 @@ inline void printOrientation(Maze::Orientation o) {
 
     void advanceTest() {
         sensI += 3;
-        if (sensI >= sizeof sensorsReadings) {
-            print("\nTEST FINISHED\n");
-            sensI = 0;
-        }
+        sensI %= sizeof sensorsReadings;
     }
 #else
     inline bool frontBlocked() {
@@ -264,7 +261,7 @@ void loop() {
             print(" :AFTER:"); 
 
             if (absDir == Maze::STOP) {
-                print(":STOPED:");
+                print(":STOPPED:");
 
                 stopMotors();
                 halt();

@@ -157,4 +157,17 @@
     #define SENSOR_READS \
         1, 1, 1,\
         1, 1, 1,
+#elif TEST_CASE == 5
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
+
+    #define TARGET_X 3
+    #define TARGET_Y 1
+
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Maze::SOUTH
+
+    #define SENSOR_READS \
+        1, 1, 1
 #endif
