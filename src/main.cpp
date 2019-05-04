@@ -1,7 +1,7 @@
-#include "common.h"
-
 #define TEST
+#define TEST_CASE 1
 
+#include "common.h"
 #include "Maze.h"
 
 Maze maze;
@@ -58,55 +58,87 @@ inline void printOrientation(Maze::Orientation o) {
 }
 
 #ifdef TEST
-bool sensorsReadings[4*3] = {
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 0,
-    0, 0, 0
-};
 
-int sensI;
+    #if TEST_CASE == 0
+        #define MAZE_LENGTH 2
+        #define MAZE_HEIGHT 3
 
-inline bool frontBlocked() {
-    return sensorsReadings[sensI+1];
-}
+        #define TARGET_X 1
+        #define TARGET_Y 2
 
-inline bool rightBlocked() {
-    return sensorsReadings[sensI+2];
-}
+        #define START_X 0
+        #define START_Y 0
+        #define START_ORIENT Maze::SOUTH
 
-inline bool leftBlocked() {
-    return sensorsReadings[sensI];
-}
+        bool sensorsReadings[] = {
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 0,
+            0, 0, 0
+        };
+    #elif TEST_CASE == 1
+        #define MAZE_LENGTH 2
+        #define MAZE_HEIGHT 4
 
-void advanceTest() {
-    sensI += 3;
-    if (sensI >= sizeof sensorsReadings) {
-        print("\nTEST FINISHED\n");
-        sensI = 0;
+        #define TARGET_X 1
+        #define TARGET_Y 0
+
+        #define START_X 0
+        #define START_Y 0
+        #define START_ORIENT Maze::SOUTH
+
+        bool sensorsReadings[] = {
+            1, 0, 0,
+            1, 0, 0,
+            0, 0, 0,
+            0, 0, 0,
+            1, 0, 0,
+            1, 0, 0
+        };
+    #endif
+
+    int sensI;
+
+    inline bool frontBlocked() {
+        return sensorsReadings[sensI+1];
     }
-}
+
+    inline bool rightBlocked() {
+        return sensorsReadings[sensI+2];
+    }
+
+    inline bool leftBlocked() {
+        return sensorsReadings[sensI];
+    }
+
+    void advanceTest() {
+        sensI += 3;
+        if (sensI >= sizeof sensorsReadings) {
+            print("\nTEST FINISHED\n");
+            sensI = 0;
+        }
+    }
 #else
-inline bool frontBlocked() {
-    static Ultrasonic ultrasonicFront(2, 6);
-    int front = ultrasonicFront.read();
-    printv(front);
-    return front <= 20;
-}
+    inline bool frontBlocked() {
+        static Ultrasonic ultrasonicFront(2, 6);
+        int front = ultrasonicFront.read();
+        printv(front);
+        return front <= 20;
+    }
 
-inline bool rightBlocked() {
-    static Ultrasonic ultrasonicRight(4, 7);
-    int right = ultrasonicRight.read();
-    printv(right);
-    return right <= 30;
-}
+    inline bool rightBlocked() {
+        static Ultrasonic ultrasonicRight(4, 7);
+        int right = ultrasonicRight.read();
+        printv(right);
+        return right <= 30;
+    }
 
-inline bool leftBlocked() {
-    static Ultrasonic ultrasonicLeft(8, 5);
-    int left = ultrasonicLeft.read();
-    printv(left);
-    return left <= 20;
-}
+    inline bool leftBlocked() {
+        static Ultrasonic ultrasonicLeft(8, 5);
+        int left = ultrasonicLeft.read();
+        printv(left);
+        return left <= 20;
+    }
 #endif
 
 
@@ -183,9 +215,8 @@ void reset() {
 }
 
 void setup() {
-    #ifdef SERIAL
-    Serial.begin(9600);
-    #endif
+    serialBegin(9600);
+    delay(500);
 
     print("started setup\n");
 
@@ -205,6 +236,12 @@ void setup() {
     print("started loop\n");
 
     toStart  = true; // TODO, setup push button
+
+    #ifdef TEST
+    print("in test mode\n");
+    printv(TEST_CASE);
+    print("\n");
+    #endif
 }
 
 void loop() {

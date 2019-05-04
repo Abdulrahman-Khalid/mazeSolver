@@ -1,27 +1,21 @@
 #include <stdint.h>
 #include <math.h>
 
-#ifndef UNO
-#define UNO 1
-#endif
-
 #ifdef TIVA
 #include <Energia.h>
-#elif UNO == 1
+#else
 #include <Arduino.h>
 #include <Ultrasonic.h>
 #endif
 
-#ifndef SERIAL
-    #define printv(n)
-    #define print(n)
-#elif NATIVE == 1
-    #include <stdio.h>
-    #define print(n) printf(n)
-    #define printv(n) print(#n"=");print(n);print(",")
-#else
+#if SERIAL
     #define print(n) Serial.print(n)
     #define printv(n) print(#n"=");print(n);print(",")
+    #define serialBegin(n) Serial.begin(n)
+#else
+    #define printv(n)
+    #define print(n)
+    #define serialBegin(n)
 #endif
 
 #ifdef TEST
