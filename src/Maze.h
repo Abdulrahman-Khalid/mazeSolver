@@ -219,9 +219,11 @@ public:
                         default: break;
                     }
                 } else {
+                    print(" ");
                     print(cells[x][y].value);
+                    print(" ");
                 }
-                print(" ");
+                print("  ");
             }
             print("\n");
         }

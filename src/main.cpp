@@ -1,5 +1,5 @@
 #define TEST
-#define TEST_CASE 3
+#define TEST_CASE 4
 
 #include "common.h"
 #include "Maze.h"
