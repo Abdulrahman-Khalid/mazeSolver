@@ -91,7 +91,7 @@ public:
     }
 
     inline Direction calcRelativeDir(Direction absDir) const {
-        return Direction((orientation + absDir) % 4);
+        return Direction((absDir - orientation + 4) % 4);
     }
 
     inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {

@@ -248,6 +248,10 @@ void loop() {
             auto f = frontBlocked(), r = rightBlocked(), l = leftBlocked();
             maze.updateAdjacentWalls(f, r, l);
 
+            printv(l);
+            printv(f);
+            printv(r);
+
             #ifdef TEST
             advanceTest();
             #endif
@@ -290,15 +294,8 @@ void loop() {
                 stateTime = (int32_t) StateTime::TURN_180;
             }
 
-            auto &x = maze.position.x, &y = maze.position.y;
-            printv(x);
-            printv(y);
-            printOrientation(maze.orientation);
-            printv(l);
-            printv(f);
-            printv(r);
-            auto direction = int(relativeDir);
-            printv(direction);
+            printv(int(absDir));
+            printv(int(relativeDir));
             printv(stateTime);
             print(":END:\n");
 
