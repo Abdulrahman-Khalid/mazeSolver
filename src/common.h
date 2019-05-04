@@ -38,12 +38,51 @@
 
 #define START_BUTTON_PIN 1
 
-#define MAZE_HEIGHT 3
-#define MAZE_LENGTH 2
+#ifndef TEST
+    #define MAZE_HEIGHT 3
+    #define MAZE_LENGTH 2
 
-#define TARGET_X 1
-#define TARGET_Y 2
+    #define TARGET_X 1
+    #define TARGET_Y 2
 
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT Maze::SOUTH
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Maze::SOUTH
+#endif
+
+#if TEST_CASE == 0
+    #define MAZE_LENGTH 2
+    #define MAZE_HEIGHT 3
+
+    #define TARGET_X 1
+    #define TARGET_Y 2
+
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Maze::SOUTH
+
+    #define SENSOR_READS \
+        1, 0, 0,\
+        0, 1, 0,\
+        0, 0, 0,\
+        0, 0, 0
+
+#elif TEST_CASE == 1
+    #define MAZE_LENGTH 2
+    #define MAZE_HEIGHT 4
+
+    #define TARGET_X 1
+    #define TARGET_Y 0
+
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Maze::SOUTH
+
+    #define SENSOR_READS \
+        1, 0, 0,\
+        1, 0, 0,\
+        0, 0, 0,\
+        0, 0, 0,\
+        1, 0, 0,\
+        1, 0, 0
+#endif

@@ -58,46 +58,8 @@ inline void printOrientation(Maze::Orientation o) {
 }
 
 #ifdef TEST
-
-    #if TEST_CASE == 0
-        #define MAZE_LENGTH 2
-        #define MAZE_HEIGHT 3
-
-        #define TARGET_X 1
-        #define TARGET_Y 2
-
-        #define START_X 0
-        #define START_Y 0
-        #define START_ORIENT Maze::SOUTH
-
-        bool sensorsReadings[] = {
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 0,
-            0, 0, 0
-        };
-    #elif TEST_CASE == 1
-        #define MAZE_LENGTH 2
-        #define MAZE_HEIGHT 4
-
-        #define TARGET_X 1
-        #define TARGET_Y 0
-
-        #define START_X 0
-        #define START_Y 0
-        #define START_ORIENT Maze::SOUTH
-
-        bool sensorsReadings[] = {
-            1, 0, 0,
-            1, 0, 0,
-            0, 0, 0,
-            0, 0, 0,
-            1, 0, 0,
-            1, 0, 0
-        };
-    #endif
-
     int sensI;
+    bool sensorsReadings[] = { SENSOR_READS };
 
     inline bool frontBlocked() {
         return sensorsReadings[sensI+1];
