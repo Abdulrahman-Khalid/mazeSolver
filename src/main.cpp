@@ -1,5 +1,5 @@
 #define TEST
-#define TEST_CASE 1
+#define TEST_CASE 3
 
 #include "common.h"
 #include "Maze.h"
@@ -229,6 +229,7 @@ void loop() {
 
     switch (currentState) {
         case State::TAKE_DECISION: {
+            maze.printBlocks();
             print(":TAKE_DECISION: :BEFORE:"); {
                 auto &x = maze.position.x, &y = maze.position.y;
                 printv(x);

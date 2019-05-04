@@ -85,4 +85,58 @@
         0, 0, 0,\
         1, 0, 0,\
         1, 0, 0
+#elif TEST_CASE == 2
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
+
+    #define TARGET_X 3
+    #define TARGET_Y 1
+
+    #define START_X 0
+    #define START_Y 4
+    #define START_ORIENT Maze::NORTH
+
+    #define SENSOR_READS \
+        0, 0, 1,\
+        0, 0, 1,\
+        0, 0, 0,\
+        0, 0, 1,\
+        0, 0, 1,\
+        1, 0, 0,\
+        0, 0, 0,\
+        0, 1, 0,\
+        1, 0, 0,\
+        0, 1, 0,\
+        1, 0, 0,\
+        0, 0, 1,\
+        0, 0, 0,\
+        0, 0, 0,\
+        1, 1, 1
+#elif TEST_CASE == 3
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
+
+    #define TARGET_X 3
+    #define TARGET_Y 1
+
+    #define START_X 0
+    #define START_Y 4
+    #define START_ORIENT Maze::NORTH
+
+    #define SENSOR_READS \
+        0, 0, 1,\
+        0, 0, 1,\
+        0, 0, 0,\
+        0, 0, 1,\
+        0, 0, 1,\
+        1, 0, 0,\
+        0, 0, 0,\
+        0, 1, 0,\
+        1, 0, 0,\
+        0, 1, 0,\
+        1, 0, 0,\
+        0, 1, 1,\
+        0, 0, 0,\
+        0, 0, 0,\
+        1, 1, 1
 #endif
