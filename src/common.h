@@ -8,7 +8,7 @@
 #include <Ultrasonic.h>
 #endif
 
-#if SERIAL
+#ifdef SERIAL
     #define print(n) Serial.print(n)
     #define printv(n) print(#n"=");print(n);print(",")
     #define serialBegin(n) Serial.begin(n)
