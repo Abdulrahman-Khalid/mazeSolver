@@ -1,57 +1,24 @@
-// #define TEST
-// #define TEST_CASE 5
-
 #include "common.h"
 #include "Maze.h"
 
-Maze maze;
-
 enum class State : uint8_t {
     TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
-};
+} currentState;
 
-State currentState;
+Maze maze;
+bool start;
 
-// time that each state takes in millis
-enum class StateTime : uint16_t {
-    NONE = 0, TURN = 1250/2, MOVE = 1734, TURN_180 = 1250
-};
-
-int32_t stateTime = 0;
-
-bool toStart;
-
-inline void printState() {
-    print("state:");
-
-    switch (currentState) {
-        case State::TURN_RIGHT:
-            print("TR,"); break;
-        case State::TURN_LEFT:
-            print("TL,");  break;
-        case State::TURN_180:
-            print("T180,");  break;
-        case State::MOVE_FORWARD:
-            print("F,");  break;
-        case State::TAKE_DECISION:
-            print("TD,");  break;
-        case State::FINISHED:
-            print("FIN,");  break;
-        default: break;
-    }
-}
-
-inline void printOrientation(Maze::Orientation o) {
+inline void printOrientation(Orientation o) {
     print("o=");
 
     switch (o) {
-        case Maze::NORTH:
+        case Orientation::NORTH:
             print("NORTH,");break;
-        case Maze::SOUTH:
+        case Orientation::SOUTH:
             print("SOUTH,");break;
-        case Maze::WEST:
+        case Orientation::WEST:
             print("WEST,");break;
-        case Maze::EAST:
+        case Orientation::EAST:
             print("EAST,");break;
         default: break;
     }
@@ -78,7 +45,7 @@ inline void printOrientation(Maze::Orientation o) {
         sensI %= sizeof sensorsReadings;
     }
 #else
-    static Ultrasonic ultrasonicFront(2, 6);
+    static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
 
     inline bool frontBlocked() {
         int front = ultrasonicFront.read();
@@ -93,20 +60,19 @@ inline void printOrientation(Maze::Orientation o) {
     }
 
     inline bool rightBlocked() {
-        static Ultrasonic ultrasonicRight(4, 7);
+        static Ultrasonic ultrasonicRight(RIGHT_US_TRIG, RIGHT_US_ECHO);
         int right = ultrasonicRight.read();
         printv(right);
         return right <= 30;
     }
 
     inline bool leftBlocked() {
-        static Ultrasonic ultrasonicLeft(8, 5);
+        static Ultrasonic ultrasonicLeft(LEFT_US_TRIG, LEFT_US_ECHO);
         int left = ultrasonicLeft.read();
         printv(left);
         return left <= 20;
     }
 #endif
-
 
 inline void rightWheelForward() {
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
@@ -133,21 +99,20 @@ inline void speed(uint8_t left, uint8_t right) {
     analogWrite(RIGHT_MOTOR_SPD_PIN, right);
 }
 
-inline void resetSpeed() {
-    speed(LEFT_MOTOR_SPD, RIGHT_MOTOR_SPD);
-}
-
 inline void moveForward() {
+    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
     rightWheelForward();
     leftWheelForward();
 }
 
 inline void turnRight() {
+    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
     rightWheelBackward();
     leftWheelForward();
 }
 
 inline void turnLeft() {
+    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
     rightWheelForward();
     leftWheelBackward();
 }
@@ -163,14 +128,10 @@ inline void stopMotors() {
 void reset() {
     print("resetting..\n");
 
-    resetSpeed();
-
+    stopMotors();
+    start = false;
     currentState = State::TAKE_DECISION;
-    stateTime = 0;
-    toStart = false;
-    stateTime = 0;
-    currentState = State::TAKE_DECISION;
-    maze.position = Maze::Position(START_X, START_Y);
+    maze.position = Position(START_X, START_Y);
     maze.orientation = START_ORIENT;
 
     #ifdef TEST
@@ -201,7 +162,7 @@ void setup() {
     delay(2000);
     print("started loop\n");
 
-    toStart  = true; // TODO, setup push button
+    start  = true; // TODO, setup push button
 
     #ifdef TEST
     print("in test mode\n");
@@ -211,28 +172,25 @@ void setup() {
 }
 
 void loop() {
-    if (!toStart) {
-        toStart = digitalRead(START_BUTTON_PIN);
+    if (!start) {
+        start = digitalRead(START_BUTTON_PIN);
 
         #ifdef SERIAL
-        toStart = toStart || Serial.read() != -1;
+        start = start || Serial.read() != -1;
         #endif
 
-        if (toStart) {
+        if (start) {
             reset();
         } else {
             return;
         }
     }
 
-    int startTime = millis();
-
-    #ifdef TEST
-    stateTime = 0;
-    #endif
-
     switch (currentState) {
         case State::TAKE_DECISION: {
+            stopMotors();
+            delay(2000);
+
             maze.printBlocks();
             print(":TAKE_DECISION: :BEFORE:"); {
                 auto &x = maze.position.x, &y = maze.position.y;
@@ -243,9 +201,8 @@ void loop() {
 
             if (maze.finished()) {
                 print("\n:FINISHED::END:\n");
-
                 currentState = State::FINISHED;
-                toStart = false; 
+                start = false; 
                 break;
             }
 
@@ -261,86 +218,81 @@ void loop() {
             #endif
 
             maze.updateCellsValues();
-            Maze::Direction absDir = maze.whereToGo(); // updates position
-            Maze::Direction relativeDir = maze.calcRelativeDir(absDir);
+            Direction absDir = maze.whereToGo(); // updates position
+            Direction relativeDir = maze.calcRelativeDir(absDir);
             maze.orientation = maze.calcOrientation(relativeDir);
 
             print(" :AFTER:"); 
 
-            if (absDir == Maze::STOP) {
+            if (absDir == Direction::STOP) {
                 print(":STOPPED:");
-
                 stopMotors();
                 halt();
-            }  else if (relativeDir == Maze::FRONT) {
-                print(":MOVE_FORWARD:");
-
-                moveForward();
+            }  else if (relativeDir == Direction::FRONT) {
                 currentState = State::MOVE_FORWARD;
-                stateTime = (int32_t) StateTime::MOVE;
-            } else if (relativeDir == Maze::RIGHT) {
-                print(":TURN_RIGHT:");
-
-                turnRight();
+            } else if (relativeDir == Direction::RIGHT) {
                 currentState = State::TURN_RIGHT;
-                stateTime = (int32_t) StateTime::TURN;
-            } else if (relativeDir == Maze::LEFT) {
-                print(":TURN_LEFT:");
-
-                turnLeft();
+            } else if (relativeDir == Direction::LEFT) {
                 currentState = State::TURN_LEFT;
-                stateTime = (int32_t) StateTime::TURN;
             } else {
-                print(":TURN_180:");
-
-                turnRight();
                 currentState = State::TURN_180;
-                stateTime = (int32_t) StateTime::TURN_180;
             }
 
             printv(int(absDir));
             printv(int(relativeDir));
-            printv(stateTime);
             print(":END:\n");
 
             break;
         }
 
         case State::MOVE_FORWARD: {
-            print(":MOVE_FORWARD:");
-            if (stateTime <= 0) {
-                stopMotors();
-                currentState = State::TAKE_DECISION;
-                stateTime = (int32_t) StateTime::NONE;
+            print(":MOVE_FORWARD:\n");
 
-                print(":END:\n");
-                break;
-            }
-
-            #ifndef TEST
-            while (frontBlockedTight()) {stopMotors(); startTime = millis();}
             moveForward();
-            #endif
+            delay(TIME_MOVE);
+            stopMotors();
+
+            currentState = State::TAKE_DECISION;
 
             break;
         }
 
-        case State::TURN_180:
-        case State::TURN_RIGHT:
-        case State::TURN_LEFT:  {
-            print(":TURN_*:");
-            if (stateTime <= 0) {
-                print(":END:\n");
+        case State::TURN_180: {
+            print(":TURN_BACK:\n");
 
-                moveForward();
-                currentState = State::MOVE_FORWARD;
-                stateTime = (int32_t) StateTime::MOVE;
-            }
+            turnRight();
+            delay(TIME_TURN_180);
+            stopMotors();
+
+            currentState = State::MOVE_FORWARD;
+            
+            break;
+        }
+
+        case State::TURN_RIGHT: {
+            print(":TURN_RIGHT:\n");
+
+            turnRight();
+            delay(TIME_TURN_90);
+            stopMotors();
+
+            currentState = State::MOVE_FORWARD;
+            
+            break;
+        }
+
+        case State::TURN_LEFT:  {
+            print(":TURN_LEFT:\n");
+
+            turnLeft();
+            delay(TIME_TURN_90);
+            stopMotors();
+
+            currentState = State::MOVE_FORWARD;
+            
             break;
         }
 
         default: stopMotors();
     }
-
-    stateTime -= millis() - startTime;
 }

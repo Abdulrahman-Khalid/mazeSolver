@@ -1,32 +1,36 @@
 #include "common.h"
 #include <cppQueue.h>
 
-struct Cell {
-    bool right:1;
-    bool left:1;
-    bool up:1;
-    bool down:1;
-    bool visited:1;
-    uint8_t:3;
+enum Orientation { NORTH, EAST, SOUTH, WEST };
 
-    uint8_t value;
+enum Direction { FRONT, RIGHT, BACK, LEFT, STOP };
+
+struct Position { 
+    uint8_t x, y; 
+    Position(uint8_t x, uint8_t y): x(x), y(y) {}
 };
 
 class Maze {
 public:
-    //      [     X     ][     Y     ]
-    Cell cells[MAZE_LENGTH][MAZE_HEIGHT];
+
+    struct Cell {
+        bool right:1;
+        bool left:1;
+        bool up:1;
+        bool down:1;
+        bool visited:1;
+        uint8_t:3;
+
+        uint8_t value;
+    } cells[MAZE_LENGTH][MAZE_HEIGHT];
+    //     [     X     ][     Y     ]
+
     Queue q;
+    Position position;
+    Orientation orientation;
 
-    struct Position { 
-        uint8_t x, y; 
-        Position(uint8_t x, uint8_t y): x(x), y(y) {}
-    } position;
-
-    enum Orientation { NORTH, EAST, SOUTH, WEST } orientation;
-
-    Maze () :position(START_X, START_Y), orientation(START_ORIENT), 
-            q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH) {}
+    Maze () :q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH),
+        position(START_X, START_Y), orientation(START_ORIENT) {}
  
     void init() {
         for (int i = 0; i < MAZE_LENGTH; i++) {
@@ -43,18 +47,15 @@ public:
         }
     }
 
-
-    enum Direction { FRONT, RIGHT, BACK, LEFT, STOP };
-
     inline Direction whereToGo() {
         uint8_t minvalue = UINT8_MAX;
-        Direction dir = STOP;
+        Direction dir = Direction::STOP;
         Position newPos = position;
         auto& c = cells[position.x][position.y];
 
         if (c.up == 0 && cells[position.x][position.y-1].value < minvalue) {
             minvalue = cells[position.x][position.y-1].value;
-            dir = FRONT;
+            dir = Direction::FRONT;
             newPos = Position(position.x, position.y-1);
 
             assert(newPos.y != 255);
@@ -62,13 +63,13 @@ public:
 
         if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
             minvalue = cells[position.x+1][position.y].value;
-            dir = RIGHT;
+            dir = Direction::RIGHT;
             newPos = Position(position.x+1, position.y);
         }
 
         if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
             minvalue = cells[position.x-1][position.y].value;
-            dir = LEFT;
+            dir = Direction::LEFT;
             newPos = Position(position.x-1, position.y);
 
             assert(newPos.x != 255);
@@ -76,7 +77,7 @@ public:
 
         if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
             minvalue = cells[position.x][position.y+1].value;
-            dir = BACK;
+            dir = Direction::BACK;
             newPos = Position(position.x, position.y+1);
         }
 
