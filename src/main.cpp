@@ -74,6 +74,14 @@ inline void printOrientation(Orientation o) {
     }
 #endif
 
+inline bool rightOnLine() {
+    return digitalRead(RIGHT_IR_PIN) == 0;
+}
+
+inline bool leftOnLine() {
+    return digitalRead(LEFT_IR_PIN) == 0;
+}
+
 inline void rightWheelForward() {
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
     digitalWrite(RIGHT_MOTOR_PIN2, LOW);
@@ -99,30 +107,81 @@ inline void speed(uint8_t left, uint8_t right) {
     analogWrite(RIGHT_MOTOR_SPD_PIN, right);
 }
 
-inline void moveForward() {
-    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
-    rightWheelForward();
-    leftWheelForward();
-}
-
-inline void turnRight() {
-    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
-    rightWheelBackward();
-    leftWheelForward();
-}
-
-inline void turnLeft() {
-    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
-    rightWheelForward();
-    leftWheelBackward();
-}
-
 inline void stopMotors() {
     digitalWrite(LEFT_MOTOR_PIN1, LOW);
     digitalWrite(LEFT_MOTOR_PIN2, LOW);
 
     digitalWrite(RIGHT_MOTOR_PIN1, LOW);
     digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+}
+
+inline void moveForward(int time) {
+    while (time > 0) {
+        int s = millis();
+        bool l = leftOnLine(), r = rightOnLine();
+
+        if ((l && r) || (!l && !r)) {
+            speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
+            rightWheelForward();
+            leftWheelForward();
+        } else if (r) {
+            speed(LEFT_FRD_SPD, RIGHT_FRD_SPD - 30);
+            rightWheelForward();
+            leftWheelForward();
+        } else { // l
+            speed(LEFT_FRD_SPD - 30, RIGHT_FRD_SPD - 30);
+            rightWheelForward();
+            leftWheelForward();
+        }
+
+        delay(20);
+
+        stopMotors();
+
+        delay(10);
+
+        time -= millis() - s;
+    }
+}
+
+inline void turnRight() {
+    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
+    
+    for (int checks = 0; checks < 4;) {
+        bool l = leftOnLine(), r = rightOnLine();
+        bool reads[] = {l, !l, r, !r};
+
+        if (reads[checks]) checks++;
+
+        rightWheelBackward();
+        leftWheelForward();
+
+        delay(20);
+
+        stopMotors();
+
+        delay(10);
+    }
+}
+
+inline void turnLeft() {
+    speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
+    
+    for (int checks = 0; checks < 4;) {
+        bool l = leftOnLine(), r = rightOnLine();
+        bool reads[] = {r, !r, l, !l};
+
+        if (reads[checks % 4]) checks++;
+
+        rightWheelForward();
+        leftWheelBackward();
+
+        delay(20);
+
+        stopMotors();
+
+        delay(10);
+    }
 }
 
 void reset() {
@@ -153,6 +212,9 @@ void setup() {
     pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
     pinMode(LEFT_MOTOR_SPD_PIN, OUTPUT);
     pinMode(RIGHT_MOTOR_SPD_PIN, OUTPUT);
+    pinMode(LEFT_IR_PIN, INPUT);
+    pinMode(RIGHT_IR_PIN, INPUT);
+    pinMode(START_BUTTON_PIN, INPUT);
 
     reset();
     maze.init();
@@ -248,8 +310,7 @@ void loop() {
         case State::MOVE_FORWARD: {
             print(":MOVE_FORWARD:\n");
 
-            moveForward();
-            delay(TIME_MOVE);
+            moveForward(TIME_MOVE);
             stopMotors();
 
             currentState = State::TAKE_DECISION;
@@ -261,7 +322,8 @@ void loop() {
             print(":TURN_BACK:\n");
 
             turnRight();
-            delay(TIME_TURN_180);
+            stopMotors();
+            turnRight();
             stopMotors();
             delay(500);
 
@@ -274,7 +336,6 @@ void loop() {
             print(":TURN_RIGHT:\n");
 
             turnRight();
-            delay(TIME_TURN_90);
             stopMotors();
             delay(500);
 
@@ -287,7 +348,6 @@ void loop() {
             print(":TURN_LEFT:\n");
 
             turnLeft();
-            delay(TIME_TURN_90-50);
             stopMotors();
             delay(500);
 

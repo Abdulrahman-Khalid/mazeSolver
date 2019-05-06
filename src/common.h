@@ -3,10 +3,10 @@
 
 #if TIVA == 1
 #include <Energia.h>
-#include <portpins.h>
 #else
 #include <Arduino.h>
 #endif
+#include <pins_energia.h>
 
 #include <Ultrasonic.h>
 
@@ -41,24 +41,27 @@
 
 // pins
 #ifdef TIVA
-    #define FRONT_US_TRIG PD0
-    #define FRONT_US_ECHO PD1
-    #define LEFT_MOTOR_SPD_PIN 
+    #define LEFT_MOTOR_PIN1 PE_3
+    #define LEFT_MOTOR_PIN2 PE_2
+    #define LEFT_MOTOR_SPD_PIN PD_1
 
-    #define RIGHT_MOTOR_PIN1 
-    #define RIGHT_MOTOR_PIN2
-    #define RIGHT_MOTOR_SPD_PIN
+    #define RIGHT_MOTOR_PIN1 PD_3
+    #define RIGHT_MOTOR_PIN2 PE_1
+    #define RIGHT_MOTOR_SPD_PIN PD_2
 
-    #define FRONT_US_TRIG
-    #define FRONT_US_ECHO
+    #define FRONT_US_TRIG PA_7
+    #define FRONT_US_ECHO PE_5
 
-    #define RIGHT_US_TRIG
-    #define RIGHT_US_ECHO
+    #define RIGHT_US_TRIG PA_5
+    #define RIGHT_US_ECHO PE_4
 
-    #define LEFT_US_TRIG
-    #define LEFT_US_ECHO
+    #define LEFT_US_TRIG PB_1
+    #define LEFT_US_ECHO PA_6
 
-    #define START_BUTTON_PIN
+    #define START_BUTTON_PIN PF_4
+
+    #define RIGHT_IR_PIN PA_2
+    #define LEFT_IR_PIN PA_3
 #else
     #define LEFT_MOTOR_PIN1 10
     #define LEFT_MOTOR_PIN2 11
@@ -78,6 +81,10 @@
     #define LEFT_US_ECHO 5
 
     #define START_BUTTON_PIN 9
+
+    // unused
+    #define RIGHT_IR_PIN 0
+    #define LEFT_IR_PIN 0
 #endif
 
 
