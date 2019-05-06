@@ -1,14 +1,7 @@
 #include "common.h"
 #include <cppQueue.h>
 
-enum Orientation { NORTH, EAST, SOUTH, WEST };
-
 enum Direction { FRONT, RIGHT, BACK, LEFT, STOP };
-
-struct Position { 
-    uint8_t x, y; 
-    Position(uint8_t x, uint8_t y): x(x), y(y) {}
-};
 
 class Maze {
 public:
@@ -26,11 +19,11 @@ public:
     //     [     X     ][     Y     ]
 
     Queue q;
-    Position position;
-    Orientation orientation;
+    Position* position;
+    Orientation* orientation;
 
-    Maze () :q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH),
-        position(START_X, START_Y), orientation(START_ORIENT) {}
+    Maze (Position* position, Orientation* orientation) :q(sizeof(Position), MAZE_HEIGHT*MAZE_LENGTH), 
+        position(position), orientation(orientation) {}
  
     void init() {
         for (int i = 0; i < MAZE_LENGTH; i++) {
@@ -50,55 +43,47 @@ public:
     inline Direction whereToGo() {
         uint8_t minvalue = UINT8_MAX;
         Direction dir = Direction::STOP;
-        Position newPos = position;
-        auto& c = cells[position.x][position.y];
+        Position newPos = *position;
+        auto& c = cells[position->x][position->y];
 
-        if (c.up == 0 && cells[position.x][position.y-1].value < minvalue) {
-            minvalue = cells[position.x][position.y-1].value;
+        if (c.up == 0 && cells[position->x][position->y-1].value < minvalue) {
+            minvalue = cells[position->x][position->y-1].value;
             dir = Direction::FRONT;
-            newPos = Position(position.x, position.y-1);
+            newPos = Position(position->x, position->y-1);
 
             assert(newPos.y != 255);
         }
 
-        if (c.right == 0 && cells[position.x+1][position.y].value < minvalue) {
-            minvalue = cells[position.x+1][position.y].value;
+        if (c.right == 0 && cells[position->x+1][position->y].value < minvalue) {
+            minvalue = cells[position->x+1][position->y].value;
             dir = Direction::RIGHT;
-            newPos = Position(position.x+1, position.y);
+            newPos = Position(position->x+1, position->y);
         }
 
-        if (c.left == 0 && cells[position.x-1][position.y].value < minvalue) {
-            minvalue = cells[position.x-1][position.y].value;
+        if (c.left == 0 && cells[position->x-1][position->y].value < minvalue) {
+            minvalue = cells[position->x-1][position->y].value;
             dir = Direction::LEFT;
-            newPos = Position(position.x-1, position.y);
+            newPos = Position(position->x-1, position->y);
 
             assert(newPos.x != 255);
         }
 
-        if (c.down == 0 && cells[position.x][position.y+1].value < minvalue) {
-            minvalue = cells[position.x][position.y+1].value;
+        if (c.down == 0 && cells[position->x][position->y+1].value < minvalue) {
+            minvalue = cells[position->x][position->y+1].value;
             dir = Direction::BACK;
-            newPos = Position(position.x, position.y+1);
+            newPos = Position(position->x, position->y+1);
         }
 
         assert(newPos.x < MAZE_LENGTH && newPos.y < MAZE_HEIGHT);
 
-        position = newPos;
+        *position = newPos;
         return dir;
     }
 
-    inline Orientation calcOrientation(Direction relativeDir) const {
-        return Orientation((orientation + relativeDir) % 4);
-    }
-
-    inline Direction calcRelativeDir(Direction absDir) const {
-        return Direction((absDir - orientation + 4) % 4);
-    }
-
     inline void updateAdjacentWalls(bool frontBlocked, bool rightBlocked, bool leftBlocked) {
-        auto& c = cells[position.x][position.y];
+        auto& c = cells[position->x][position->y];
 
-        switch (orientation) {
+        switch (*orientation) {
             case EAST: {
                 c.right |= frontBlocked;
                 c.up |= leftBlocked;
@@ -132,10 +117,10 @@ public:
             }
         }
 
-        if (position.x+1 < MAZE_LENGTH) cells[position.x+1][position.y].left = c.right;
-        if (position.x > 0) cells[position.x-1][position.y].right = c.left;
-        if (position.y+1 < MAZE_HEIGHT) cells[position.x][position.y+1].up = c.down;
-        if (position.y > 0) cells[position.x][position.y-1].down = c.up;
+        if (position->x+1 < MAZE_LENGTH) cells[position->x+1][position->y].left = c.right;
+        if (position->x > 0) cells[position->x-1][position->y].right = c.left;
+        if (position->y+1 < MAZE_HEIGHT) cells[position->x][position->y+1].up = c.down;
+        if (position->y > 0) cells[position->x][position->y-1].down = c.up;
     }
 
     void updateCellsValues() {
@@ -200,33 +185,6 @@ public:
     }
 
     bool finished() {
-        return position.x == TARGET_X && position.y == TARGET_Y;
-    }
-
-    void printBlocks() {
-        print("\n");
-        for (int y = 0; y < MAZE_HEIGHT; y++) {
-            for (int x = 0; x < MAZE_LENGTH; x++) {
-                if (x == position.x && y == position.y) {
-                    switch (orientation) {
-                        case NORTH:
-                            print("^"); break;
-                        case EAST:
-                            print(">"); break;
-                        case WEST:
-                            print("<"); break;
-                        case SOUTH:
-                            print("v"); break;
-                        default: break;
-                    }
-                } else {
-                    print(" ");
-                    print(cells[x][y].value);
-                    print(" ");
-                }
-                print("  ");
-            }
-            print("\n");
-        }
+        return position->x == TARGET_X && position->y == TARGET_Y;
     }
 };

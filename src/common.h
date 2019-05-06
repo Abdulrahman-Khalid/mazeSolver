@@ -1,12 +1,12 @@
 #include <stdint.h>
 #include <math.h>
 
-#if TIVA == 1
+#ifdef TIVA
 #include <Energia.h>
+#include <pins_energia.h>
 #else
 #include <Arduino.h>
 #endif
-#include <pins_energia.h>
 
 #include <Ultrasonic.h>
 
@@ -28,6 +28,21 @@
 
 #define halt() do { print("\nHALT\n");while(1); } while(0)
 
+#ifndef _POSITION_
+#define _POSITION_
+struct Position { 
+    uint8_t x, y; 
+    inline Position(uint8_t x, uint8_t y): x(x), y(y) {}
+};
+#endif
+
+#ifndef _ORIENT_
+#define _ORIENT_
+enum Orientation : uint8_t { 
+    NORTH, EAST, SOUTH, WEST 
+};
+#endif
+
 // time that each state takes in millis
 #define TIME_MOVE  1500
 #define TIME_TURN_90  500
@@ -45,8 +60,8 @@
     #define LEFT_MOTOR_PIN2 PE_2
     #define LEFT_MOTOR_SPD_PIN PD_1
 
-    #define RIGHT_MOTOR_PIN1 PD_3
-    #define RIGHT_MOTOR_PIN2 PE_1
+    #define RIGHT_MOTOR_PIN1 PB_3
+    #define RIGHT_MOTOR_PIN2 PC_4
     #define RIGHT_MOTOR_SPD_PIN PD_2
 
     #define FRONT_US_TRIG PA_7
@@ -58,7 +73,7 @@
     #define LEFT_US_TRIG PB_1
     #define LEFT_US_ECHO PA_6
 
-    #define START_BUTTON_PIN PF_4
+    #define START_BUTTON_PIN PA_4
 
     #define RIGHT_IR_PIN PA_2
     #define LEFT_IR_PIN PA_3

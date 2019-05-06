@@ -1,14 +1,31 @@
+// #define TEST
+// #define TEST_CASE 0
+#define SERIAL
+// #define IR_ASSISTED
+
 #include "common.h"
 #include "Maze.h"
 
-enum class State : uint8_t {
+enum State : uint8_t {
     TURN_RIGHT, TURN_LEFT, TURN_180, MOVE_FORWARD, TAKE_DECISION, FINISHED
 } currentState;
 
-Maze maze;
+Orientation orientation = START_ORIENT;
+Position position(START_X, START_Y);
+
+Maze maze(&position, &orientation);
 bool start;
 
+inline Orientation calcOrientation(Direction relativeDir, Orientation orientation) {
+    return Orientation((orientation + relativeDir) % 4);
+}
+
+inline Direction calcRelativeDir(Direction absDir, Orientation orientation) {
+    return Direction((absDir - orientation + 4) % 4);
+}
+
 inline void printOrientation(Orientation o) {
+#ifdef SERIAL
     print("o=");
 
     switch (o) {
@@ -22,6 +39,36 @@ inline void printOrientation(Orientation o) {
             print("EAST,");break;
         default: break;
     }
+#endif
+}
+
+inline void printBlocks() {
+#ifdef SERIAL
+    print("\n");
+    for (int y = 0; y < MAZE_HEIGHT; y++) {
+        for (int x = 0; x < MAZE_LENGTH; x++) {
+            if (x == position.x && y == position.y) {
+                switch (orientation) {
+                    case NORTH:
+                        print("^"); break;
+                    case EAST:
+                        print(">"); break;
+                    case WEST:
+                        print("<"); break;
+                    case SOUTH:
+                        print("v"); break;
+                    default: break;
+                }
+            } else {
+                print(" ");
+                print(maze.cells[x][y].value);
+                print(" ");
+            }
+            print("  ");
+        }
+        print("\n");
+    }
+#endif
 }
 
 #ifdef TEST
@@ -115,15 +162,19 @@ inline void stopMotors() {
     digitalWrite(RIGHT_MOTOR_PIN2, LOW);
 }
 
-inline void moveForward(int time) {
+inline void moveForward() {
+    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
+    rightWheelForward();
+    leftWheelForward();
+}
+
+inline void moveForwardWithIR(int time) {
     while (time > 0) {
         int s = millis();
         bool l = leftOnLine(), r = rightOnLine();
 
         if ((l && r) || (!l && !r)) {
-            speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
-            rightWheelForward();
-            leftWheelForward();
+            moveForward();
         } else if (r) {
             speed(LEFT_FRD_SPD, RIGHT_FRD_SPD - 30);
             rightWheelForward();
@@ -146,15 +197,18 @@ inline void moveForward(int time) {
 
 inline void turnRight() {
     speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
-    
+    rightWheelBackward();
+    leftWheelForward();
+}
+
+inline void turnRightWithIR() {    
     for (int checks = 0; checks < 4;) {
         bool l = leftOnLine(), r = rightOnLine();
         bool reads[] = {l, !l, r, !r};
 
         if (reads[checks]) checks++;
 
-        rightWheelBackward();
-        leftWheelForward();
+        turnRight();
 
         delay(20);
 
@@ -166,15 +220,18 @@ inline void turnRight() {
 
 inline void turnLeft() {
     speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
-    
+    rightWheelForward();
+    leftWheelBackward();
+}
+
+inline void turnLeftWithIR() {    
     for (int checks = 0; checks < 4;) {
         bool l = leftOnLine(), r = rightOnLine();
         bool reads[] = {r, !r, l, !l};
 
         if (reads[checks % 4]) checks++;
 
-        rightWheelForward();
-        leftWheelBackward();
+        turnLeft();
 
         delay(20);
 
@@ -190,11 +247,11 @@ void reset() {
     stopMotors();
     start = false;
     currentState = State::TAKE_DECISION;
-    maze.position = Position(START_X, START_Y);
-    maze.orientation = START_ORIENT;
+    position = Position(START_X, START_Y);
+    orientation = START_ORIENT;
 
     #ifdef TEST
-    sensI = 0;
+        sensI = 0;
     #endif
 
     print("reset finished\n");
@@ -227,9 +284,9 @@ void setup() {
     start  = true; // TODO, setup push button
 
     #ifdef TEST
-    print("in test mode\n");
-    printv(TEST_CASE);
-    print("\n");
+        print("in test mode\n");
+        printv(TEST_CASE);
+        print("\n");
     #endif
 }
 
@@ -253,12 +310,12 @@ void loop() {
             stopMotors();
             delay(2000);
 
-            maze.printBlocks();
+            printBlocks();
             print(":TAKE_DECISION: :BEFORE:"); {
-                auto &x = maze.position.x, &y = maze.position.y;
+                auto &x = position.x, &y = position.y;
                 printv(x);
                 printv(y);
-                printOrientation(maze.orientation);
+                printOrientation(orientation);
             }
 
             if (maze.finished()) {
@@ -276,13 +333,13 @@ void loop() {
             printv(r);
 
             #ifdef TEST
-            advanceTest();
+                advanceTest();
             #endif
 
             maze.updateCellsValues();
             Direction absDir = maze.whereToGo(); // updates position
-            Direction relativeDir = maze.calcRelativeDir(absDir);
-            maze.orientation = maze.calcOrientation(relativeDir);
+            Direction relativeDir = calcRelativeDir(absDir, orientation);
+            orientation = calcOrientation(relativeDir, orientation);
 
             print(" :AFTER:"); 
 
@@ -310,49 +367,68 @@ void loop() {
         case State::MOVE_FORWARD: {
             print(":MOVE_FORWARD:\n");
 
-            moveForward(TIME_MOVE);
+            #ifdef IR_ASSISTED
+                moveForwardWithIR(TIME_MOVE);
+            #else
+                moveForward();
+                delay(TIME_MOVE);
+            #endif
             stopMotors();
 
             currentState = State::TAKE_DECISION;
-
             break;
         }
 
         case State::TURN_180: {
             print(":TURN_BACK:\n");
 
-            turnRight();
-            stopMotors();
-            turnRight();
-            stopMotors();
+            #ifdef IR_ASSISTED
+                turnRightWithIR();
+                stopMotors();
+                turnRightWithIR();
+                stopMotors();
+            #else
+                turnRight();
+                delay(TIME_TURN_180);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
-            
             break;
         }
 
         case State::TURN_RIGHT: {
             print(":TURN_RIGHT:\n");
 
-            turnRight();
-            stopMotors();
+            #ifdef IR_ASSISTED
+                turnRightWithIR();
+                stopMotors();
+            #else
+                turnRight();
+                delay(TIME_TURN_90);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
-            
             break;
         }
 
         case State::TURN_LEFT:  {
             print(":TURN_LEFT:\n");
 
-            turnLeft();
-            stopMotors();
+            #ifdef IR_ASSISTED
+                turnLeftWithIR();
+                stopMotors();
+            #else 
+                turnLeft();
+                delay(TIME_TURN_90);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
-            
             break;
         }
 
