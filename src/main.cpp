@@ -1,7 +1,7 @@
 // #define TEST
 // #define TEST_CASE 0
 #define SERIAL
-// #define IR_ASSISTED
+#define IR_ASSISTED
 
 #include "common.h"
 #include "Maze.h"
@@ -163,33 +163,42 @@ inline void stopMotors() {
 }
 
 inline void moveForward() {
-    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
+    // speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
+    // speed(150, 150);
     rightWheelForward();
     leftWheelForward();
 }
 
 inline void moveForwardWithIR(int time) {
-    while (time > 0) {
+    float s = 0;
+    moveForward();
+    // while (time > 0) {
+    while (true) {
         int s = millis();
         bool l = leftOnLine(), r = rightOnLine();
 
+        if (s < 150) s += .01;
+
         if ((l && r) || (!l && !r)) {
-            moveForward();
+            speed(s, s);
+            // moveForward();
         } else if (r) {
-            speed(LEFT_FRD_SPD, RIGHT_FRD_SPD - 30);
-            rightWheelForward();
-            leftWheelForward();
+            speed(LEFT_FRD_SPD, 0);
+            // stopMotors();
+            // leftWheelForward();
+            // rightWheelForward();
         } else { // l
-            speed(LEFT_FRD_SPD - 30, RIGHT_FRD_SPD - 30);
-            rightWheelForward();
-            leftWheelForward();
+            speed(0, RIGHT_FRD_SPD);
+            // stopMotors();
+            // leftWheelForward();
+            // rightWheelForward();
         }
 
-        delay(20);
+        // delay(100);
 
-        stopMotors();
+        // stopMotors();
 
-        delay(10);
+        // delay(200);
 
         time -= millis() - s;
     }
@@ -291,6 +300,10 @@ void setup() {
 }
 
 void loop() {
+    // moveForward();
+    moveForwardWithIR(INT32_MAX);
+    return;
+
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 

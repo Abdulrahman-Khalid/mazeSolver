@@ -49,7 +49,7 @@ enum Orientation : uint8_t {
 #define TIME_TURN_180  2*TIME_TURN_90
 
 // motor speeds
-#define LEFT_FRD_SPD 1703
+#define LEFT_FRD_SPD 183
 #define LEFT_TRN_SPD 180
 #define RIGHT_FRD_SPD 163
 #define RIGHT_TRN_SPD 180
@@ -58,11 +58,11 @@ enum Orientation : uint8_t {
 #ifdef TIVA
     #define LEFT_MOTOR_PIN1 PE_3
     #define LEFT_MOTOR_PIN2 PE_2
-    #define LEFT_MOTOR_SPD_PIN PD_1
+    #define LEFT_MOTOR_SPD_PIN PD_2
 
     #define RIGHT_MOTOR_PIN1 PB_3
     #define RIGHT_MOTOR_PIN2 PC_4
-    #define RIGHT_MOTOR_SPD_PIN PD_2
+    #define RIGHT_MOTOR_SPD_PIN PD_1
 
     #define FRONT_US_TRIG PA_7
     #define FRONT_US_ECHO PE_5
