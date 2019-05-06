@@ -203,7 +203,7 @@ inline void turnRight() {
 
 inline void turnRightWithIR() {
     turnRight();
-    delay(100);
+    delay(300);
     while (!(leftOnLine() || rightOnLine())) {}
     while (rightOnLine()) {}
     stopMotors();
@@ -217,7 +217,7 @@ inline void turnLeft() {
 
 inline void turnLeftWithIR() {
     turnLeft();
-    delay(100);
+    delay(300);
     while (!(leftOnLine() || rightOnLine())) {}
     while (leftOnLine()) {}
     stopMotors();
@@ -273,6 +273,12 @@ void setup() {
 }
 
 void loop() {
+    turnLeftWithIR();
+    delay(3000);
+    turnRightWithIR();
+    delay(3000);
+    return;
+
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 
@@ -364,14 +370,14 @@ void loop() {
             print(":TURN_BACK:\n");
 
 #ifdef IR_ASSISTED
-            turnRightWithIR();
-            stopMotors();
-            turnRightWithIR();
-            stopMotors();
-#else
+            // turnRightWithIR();
+            // stopMotors();
+            // turnRightWithIR();
+            // stopMotors();
             turnRight();
             delay(TIME_TURN_180);
             stopMotors();
+#else
 #endif
             delay(500);
 
@@ -383,12 +389,12 @@ void loop() {
             print(":TURN_RIGHT:\n");
 
 #ifdef IR_ASSISTED
-            turnRightWithIR();
-            stopMotors();
-#else
+            // turnRightWithIR();
+            // stopMotors();
             turnRight();
             delay(TIME_TURN_90);
             stopMotors();
+#else
 #endif
             delay(500);
 
@@ -400,12 +406,12 @@ void loop() {
             print(":TURN_LEFT:\n");
 
 #ifdef IR_ASSISTED
-            turnLeftWithIR();
-            stopMotors();
-#else
+            // turnLeftWithIR();
+            // stopMotors();
             turnLeft();
             delay(TIME_TURN_90);
             stopMotors();
+#else
 #endif
             delay(500);
 

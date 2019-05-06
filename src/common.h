@@ -60,15 +60,15 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #endif
 
 // time that each state takes in millis
-#define TIME_MOVE 1500
+#define TIME_MOVE 1200
 #define TIME_TURN_90 500
 #define TIME_TURN_180 2 * TIME_TURN_90
 
 // motor speeds
-#define LEFT_FRD_SPD 130
-#define LEFT_TRN_SPD 130
-#define RIGHT_FRD_SPD 130
-#define RIGHT_TRN_SPD 130
+#define LEFT_FRD_SPD 150
+#define LEFT_TRN_SPD 150
+#define RIGHT_FRD_SPD 150
+#define RIGHT_TRN_SPD 150
 
 // pins
 #ifdef TIVA
