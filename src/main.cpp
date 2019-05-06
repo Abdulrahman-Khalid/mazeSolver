@@ -263,6 +263,7 @@ void loop() {
             turnRight();
             delay(TIME_TURN_180);
             stopMotors();
+            delay(500);
 
             currentState = State::MOVE_FORWARD;
             
@@ -275,6 +276,7 @@ void loop() {
             turnRight();
             delay(TIME_TURN_90);
             stopMotors();
+            delay(500);
 
             currentState = State::MOVE_FORWARD;
             
@@ -285,8 +287,9 @@ void loop() {
             print(":TURN_LEFT:\n");
 
             turnLeft();
-            delay(TIME_TURN_90);
+            delay(TIME_TURN_90-50);
             stopMotors();
+            delay(500);
 
             currentState = State::MOVE_FORWARD;
             

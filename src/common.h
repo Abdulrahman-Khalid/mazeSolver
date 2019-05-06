@@ -1,12 +1,14 @@
 #include <stdint.h>
 #include <math.h>
 
-#ifdef TIVA
+#if TIVA == 1
 #include <Energia.h>
+#include <portpins.h>
 #else
 #include <Arduino.h>
-#include <Ultrasonic.h>
 #endif
+
+#include <Ultrasonic.h>
 
 #ifdef SERIAL
     #define print(n) Serial.print(n)
@@ -32,43 +34,66 @@
 #define TIME_TURN_180  2*TIME_TURN_90
 
 // motor speeds
-#define LEFT_FRD_SPD 183
+#define LEFT_FRD_SPD 1703
 #define LEFT_TRN_SPD 180
 #define RIGHT_FRD_SPD 163
 #define RIGHT_TRN_SPD 180
 
 // pins
-#define LEFT_MOTOR_PIN1 10
-#define LEFT_MOTOR_PIN2 11
-#define LEFT_MOTOR_SPD_PIN 3
+#ifdef TIVA
+    #define FRONT_US_TRIG PD0
+    #define FRONT_US_ECHO PD1
+    #define LEFT_MOTOR_SPD_PIN 
 
-#define RIGHT_MOTOR_PIN1 12
-#define RIGHT_MOTOR_PIN2 13
-#define RIGHT_MOTOR_SPD_PIN 9
+    #define RIGHT_MOTOR_PIN1 
+    #define RIGHT_MOTOR_PIN2
+    #define RIGHT_MOTOR_SPD_PIN
 
-#define FRONT_US_TRIG 2
-#define FRONT_US_ECHO 6
+    #define FRONT_US_TRIG
+    #define FRONT_US_ECHO
 
-#define RIGHT_US_TRIG 4
-#define RIGHT_US_ECHO 7
+    #define RIGHT_US_TRIG
+    #define RIGHT_US_ECHO
 
-#define LEFT_US_TRIG 8
-#define LEFT_US_ECHO 5
+    #define LEFT_US_TRIG
+    #define LEFT_US_ECHO
 
-#define START_BUTTON_PIN 9
+    #define START_BUTTON_PIN
+#else
+    #define LEFT_MOTOR_PIN1 10
+    #define LEFT_MOTOR_PIN2 11
+    #define LEFT_MOTOR_SPD_PIN 3
+
+    #define RIGHT_MOTOR_PIN1 12
+    #define RIGHT_MOTOR_PIN2 13
+    #define RIGHT_MOTOR_SPD_PIN 9
+
+    #define FRONT_US_TRIG 2
+    #define FRONT_US_ECHO 6
+
+    #define RIGHT_US_TRIG 4
+    #define RIGHT_US_ECHO 7
+
+    #define LEFT_US_TRIG 8
+    #define LEFT_US_ECHO 5
+
+    #define START_BUTTON_PIN 9
+#endif
+
 
 #ifndef TEST
     #define MAZE_HEIGHT 2
     #define MAZE_LENGTH 2
 
     #define TARGET_X 1
-    #define TARGET_Y 1
+    #define TARGET_Y 0
 
     #define START_X 0
     #define START_Y 0
     #define START_ORIENT Orientation::SOUTH
 #endif
 
+#ifdef TEST
 #if TEST_CASE == 0
     #define MAZE_LENGTH 2
     #define MAZE_HEIGHT 3
@@ -189,4 +214,5 @@
 
     #define SENSOR_READS \
         1, 1, 1
+#endif
 #endif

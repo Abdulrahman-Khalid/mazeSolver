@@ -18,11 +18,14 @@
  *
  * Released into the MIT License.
  */
-
+#ifdef TIVA
+#include <Energia.h>
+#else
 #if ARDUINO >= 100
   #include <Arduino.h>
 #else
   #include <WProgram.h>
+#endif
 #endif
 
 #include "Ultrasonic.h"
