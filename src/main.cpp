@@ -88,47 +88,47 @@ inline void printBlocks() {
 }
 
 #ifdef TEST
-int sensI;
-bool sensorsReadings[] = {SENSOR_READS};
+    int sensI;
+    bool sensorsReadings[] = {SENSOR_READS};
 
-inline bool frontBlocked() { return sensorsReadings[sensI + 1]; }
+    inline bool frontBlocked() { return sensorsReadings[sensI + 1]; }
 
-inline bool rightBlocked() { return sensorsReadings[sensI + 2]; }
+    inline bool rightBlocked() { return sensorsReadings[sensI + 2]; }
 
-inline bool leftBlocked() { return sensorsReadings[sensI]; }
+    inline bool leftBlocked() { return sensorsReadings[sensI]; }
 
-void advanceTest() {
-    sensI += 3;
-    sensI %= sizeof sensorsReadings;
-}
+    void advanceTest() {
+        sensI += 3;
+        sensI %= sizeof sensorsReadings;
+    }
 #else
-static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
+    static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
 
-inline bool frontBlocked() {
-    int front = ultrasonicFront.read();
-    printv(front);
-    return front <= 20;
-}
+    inline bool frontBlocked() {
+        int front = ultrasonicFront.read();
+        printv(front);
+        return front <= 20;
+    }
 
-inline bool frontBlockedTight() {
-    int front = ultrasonicFront.read();
-    printv(front);
-    return front <= 5;
-}
+    inline bool frontBlockedTight() {
+        int front = ultrasonicFront.read();
+        printv(front);
+        return front <= 5;
+    }
 
-inline bool rightBlocked() {
-    static Ultrasonic ultrasonicRight(RIGHT_US_TRIG, RIGHT_US_ECHO);
-    int right = ultrasonicRight.read();
-    printv(right);
-    return right <= 30;
-}
+    inline bool rightBlocked() {
+        static Ultrasonic ultrasonicRight(RIGHT_US_TRIG, RIGHT_US_ECHO);
+        int right = ultrasonicRight.read();
+        printv(right);
+        return right <= 30;
+    }
 
-inline bool leftBlocked() {
-    static Ultrasonic ultrasonicLeft(LEFT_US_TRIG, LEFT_US_ECHO);
-    int left = ultrasonicLeft.read();
-    printv(left);
-    return left <= 20;
-}
+    inline bool leftBlocked() {
+        static Ultrasonic ultrasonicLeft(LEFT_US_TRIG, LEFT_US_ECHO);
+        int left = ultrasonicLeft.read();
+        printv(left);
+        return left <= 20;
+    }
 #endif
 
 inline bool rightOnLine() { return digitalRead(RIGHT_IR_PIN) == 0; }
@@ -204,10 +204,8 @@ inline void turnRight() {
 inline void turnRightWithIR() {
     turnRight();
     delay(100);
-    while (!(leftOnLine() || rightOnLine())) {
-    }
-    while (rightOnLine()) {
-    }
+    while (!(leftOnLine() || rightOnLine())) {}
+    while (rightOnLine()) {}
     stopMotors();
 }
 
@@ -220,10 +218,8 @@ inline void turnLeft() {
 inline void turnLeftWithIR() {
     turnLeft();
     delay(100);
-    while (!(leftOnLine() || rightOnLine())) {
-    }
-    while (leftOnLine()) {
-    }
+    while (!(leftOnLine() || rightOnLine())) {}
+    while (leftOnLine()) {}
     stopMotors();
 }
 
@@ -277,13 +273,6 @@ void setup() {
 }
 
 void loop() {
-    turnRightWithIR();
-    // moveForwardWithIR(500);
-    delay(5000);
-    turnLeftWithIR();
-    delay(5000);
-    return;
-
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 

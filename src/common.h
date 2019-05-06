@@ -72,142 +72,142 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 
 // pins
 #ifdef TIVA
-#define LEFT_MOTOR_PIN1 PE_3
-#define LEFT_MOTOR_PIN2 PE_2
-#define LEFT_MOTOR_SPD_PIN PD_2
+    #define LEFT_MOTOR_PIN1 PE_3
+    #define LEFT_MOTOR_PIN2 PE_2
+    #define LEFT_MOTOR_SPD_PIN PD_2
 
-#define RIGHT_MOTOR_PIN1 PB_3
-#define RIGHT_MOTOR_PIN2 PC_4
-#define RIGHT_MOTOR_SPD_PIN PD_1
+    #define RIGHT_MOTOR_PIN1 PB_3
+    #define RIGHT_MOTOR_PIN2 PC_4
+    #define RIGHT_MOTOR_SPD_PIN PD_1
 
-#define FRONT_US_TRIG PA_7
-#define FRONT_US_ECHO PE_5
+    #define FRONT_US_TRIG PA_7
+    #define FRONT_US_ECHO PE_5
 
-#define RIGHT_US_TRIG PA_5
-#define RIGHT_US_ECHO PE_4
+    #define RIGHT_US_TRIG PA_5
+    #define RIGHT_US_ECHO PE_4
 
-#define LEFT_US_TRIG PB_1
-#define LEFT_US_ECHO PA_6
+    #define LEFT_US_TRIG PB_1
+    #define LEFT_US_ECHO PA_6
 
-#define START_BUTTON_PIN PA_4
+    #define START_BUTTON_PIN PA_4
 
-#define RIGHT_IR_PIN PA_2
-#define LEFT_IR_PIN PA_3
+    #define RIGHT_IR_PIN PA_2
+    #define LEFT_IR_PIN PA_3
 #else
-#define LEFT_MOTOR_PIN1 10
-#define LEFT_MOTOR_PIN2 11
-#define LEFT_MOTOR_SPD_PIN 3
+    #define LEFT_MOTOR_PIN1 10
+    #define LEFT_MOTOR_PIN2 11
+    #define LEFT_MOTOR_SPD_PIN 3
 
-#define RIGHT_MOTOR_PIN1 12
-#define RIGHT_MOTOR_PIN2 13
-#define RIGHT_MOTOR_SPD_PIN 9
+    #define RIGHT_MOTOR_PIN1 12
+    #define RIGHT_MOTOR_PIN2 13
+    #define RIGHT_MOTOR_SPD_PIN 9
 
-#define FRONT_US_TRIG 2
-#define FRONT_US_ECHO 6
+    #define FRONT_US_TRIG 2
+    #define FRONT_US_ECHO 6
 
-#define RIGHT_US_TRIG 4
-#define RIGHT_US_ECHO 7
+    #define RIGHT_US_TRIG 4
+    #define RIGHT_US_ECHO 7
 
-#define LEFT_US_TRIG 8
-#define LEFT_US_ECHO 5
+    #define LEFT_US_TRIG 8
+    #define LEFT_US_ECHO 5
 
-#define START_BUTTON_PIN 9
+    #define START_BUTTON_PIN 9
 
-// unused
-#define RIGHT_IR_PIN 0
-#define LEFT_IR_PIN 0
+    // unused
+    #define RIGHT_IR_PIN 0
+    #define LEFT_IR_PIN 0
 #endif
 
 #ifndef TEST
-#define MAZE_HEIGHT 2
-#define MAZE_LENGTH 2
+    #define MAZE_HEIGHT 2
+    #define MAZE_LENGTH 2
 
-#define TARGET_X 1
-#define TARGET_Y 0
+    #define TARGET_X 1
+    #define TARGET_Y 0
 
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT Orientation::SOUTH
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Orientation::SOUTH
 #endif
 
 #ifdef TEST
 #if TEST_CASE == 0
-#define MAZE_LENGTH 2
-#define MAZE_HEIGHT 3
+    #define MAZE_LENGTH 2
+    #define MAZE_HEIGHT 3
 
-#define TARGET_X 1
-#define TARGET_Y 2
+    #define TARGET_X 1
+    #define TARGET_Y 2
 
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT Orientation::SOUTH
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Orientation::SOUTH
 
-#define SENSOR_READS 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+    #define SENSOR_READS 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
 
 #elif TEST_CASE == 1
-#define MAZE_LENGTH 2
-#define MAZE_HEIGHT 4
+    #define MAZE_LENGTH 2
+    #define MAZE_HEIGHT 4
 
-#define TARGET_X 1
-#define TARGET_Y 0
+    #define TARGET_X 1
+    #define TARGET_Y 0
 
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT Orientation::SOUTH
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Orientation::SOUTH
 
-#define SENSOR_READS 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0
+    #define SENSOR_READS 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0
 #elif TEST_CASE == 2
-#define MAZE_LENGTH 5
-#define MAZE_HEIGHT 5
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
 
-#define TARGET_X 3
-#define TARGET_Y 1
+    #define TARGET_X 3
+    #define TARGET_Y 1
 
-#define START_X 0
-#define START_Y 4
-#define START_ORIENT Orientation::NORTH
+    #define START_X 0
+    #define START_Y 4
+    #define START_ORIENT Orientation::NORTH
 
-#define SENSOR_READS                                                           \
-    0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, \
-        0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1
+    #define SENSOR_READS                                                           \
+        0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, \
+            0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1
 #elif TEST_CASE == 3
-#define MAZE_LENGTH 5
-#define MAZE_HEIGHT 5
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
 
-#define TARGET_X 3
-#define TARGET_Y 1
+    #define TARGET_X 3
+    #define TARGET_Y 1
 
-#define START_X 0
-#define START_Y 4
-#define START_ORIENT Orientation::NORTH
+    #define START_X 0
+    #define START_Y 4
+    #define START_ORIENT Orientation::NORTH
 
-#define SENSOR_READS                                                           \
-    0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, \
-        0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1,   \
-        0, 0, 0, 0, 0, 0, 1, 1, 1
+    #define SENSOR_READS                                                           \
+        0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, \
+            0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1,   \
+            0, 0, 0, 0, 0, 0, 1, 1, 1
 #elif TEST_CASE == 4
-#define MAZE_LENGTH 5
-#define MAZE_HEIGHT 5
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
 
-#define TARGET_X 3
-#define TARGET_Y 1
+    #define TARGET_X 3
+    #define TARGET_Y 1
 
-#define START_X 3
-#define START_Y 1
-#define START_ORIENT Orientation::NORTH
+    #define START_X 3
+    #define START_Y 1
+    #define START_ORIENT Orientation::NORTH
 
-#define SENSOR_READS 1, 1, 1, 1, 1, 1,
+    #define SENSOR_READS 1, 1, 1, 1, 1, 1,
 #elif TEST_CASE == 5
-#define MAZE_LENGTH 5
-#define MAZE_HEIGHT 5
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 5
 
-#define TARGET_X 3
-#define TARGET_Y 1
+    #define TARGET_X 3
+    #define TARGET_Y 1
 
-#define START_X 0
-#define START_Y 0
-#define START_ORIENT Orientation::SOUTH
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Orientation::SOUTH
 
-#define SENSOR_READS 1, 1, 1
+    #define SENSOR_READS 1, 1, 1
 #endif
 #endif
