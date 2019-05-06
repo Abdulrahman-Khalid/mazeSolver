@@ -131,9 +131,9 @@ inline void printBlocks() {
     }
 #endif
 
-inline bool rightOnLine() { return digitalRead(RIGHT_IR_PIN) == 0; }
+inline bool rightOnLine() { return digitalRead(RIGHT_IR_PIN); }
 
-inline bool leftOnLine() { return digitalRead(LEFT_IR_PIN) == 0; }
+inline bool leftOnLine() { return digitalRead(LEFT_IR_PIN); }
 
 inline void rightWheelForward() {
     digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
@@ -184,9 +184,9 @@ inline void moveForwardWithIR(int time) {
         if ((l && r) || (!l && !r)) {
             speed(RIGHT_FRD_SPD, LEFT_FRD_SPD);
         } else if (r) {
-            speed(RIGHT_FRD_SPD, 0);
+            speed(LEFT_FRD_SPD, 0);
         } else {  // l
-            speed(0, LEFT_FRD_SPD);
+            speed(0, RIGHT_FRD_SPD);
         }
 
         time -= millis() - s;
@@ -202,11 +202,17 @@ inline void turnRight() {
 }
 
 inline void turnRightWithIR() {
+    // print("1\n");
     turnRight();
+    // print("2\n");
     delay(300);
-    while (!(leftOnLine() || rightOnLine())) {}
-    while (rightOnLine()) {}
+    // print("3\n");
+    while(leftOnLine() || rightOnLine());
+    // print("4\n");
+    while (!rightOnLine());
+    // print("5\n");
     stopMotors();
+    // print("6\n");
 }
 
 inline void turnLeft() {
@@ -216,11 +222,17 @@ inline void turnLeft() {
 }
 
 inline void turnLeftWithIR() {
+    // print("1\n");
     turnLeft();
+    // print("2\n");
     delay(300);
-    while (!(leftOnLine() || rightOnLine())) {}
-    while (leftOnLine()) {}
+    // print("3\n");
+    while(leftOnLine() || rightOnLine());
+    // print("4\n");
+    while (!leftOnLine());
+    // print("5\n");
     stopMotors();
+    // print("6\n");
 }
 
 void reset() {
@@ -273,12 +285,6 @@ void setup() {
 }
 
 void loop() {
-    turnLeftWithIR();
-    delay(3000);
-    turnRightWithIR();
-    delay(3000);
-    return;
-
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 
@@ -370,14 +376,14 @@ void loop() {
             print(":TURN_BACK:\n");
 
 #ifdef IR_ASSISTED
-            // turnRightWithIR();
-            // stopMotors();
-            // turnRightWithIR();
-            // stopMotors();
+            turnRightWithIR();
+            stopMotors();
+            turnRightWithIR();
+            stopMotors();
+#else
             turnRight();
             delay(TIME_TURN_180);
             stopMotors();
-#else
 #endif
             delay(500);
 
@@ -389,12 +395,12 @@ void loop() {
             print(":TURN_RIGHT:\n");
 
 #ifdef IR_ASSISTED
-            // turnRightWithIR();
-            // stopMotors();
+            turnRightWithIR();
+            stopMotors();
+#else
             turnRight();
             delay(TIME_TURN_90);
             stopMotors();
-#else
 #endif
             delay(500);
 
@@ -406,12 +412,12 @@ void loop() {
             print(":TURN_LEFT:\n");
 
 #ifdef IR_ASSISTED
-            // turnLeftWithIR();
-            // stopMotors();
+            turnLeftWithIR();
+            stopMotors();
+#else
             turnLeft();
             delay(TIME_TURN_90);
             stopMotors();
-#else
 #endif
             delay(500);
 

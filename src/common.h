@@ -67,8 +67,8 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 // motor speeds
 #define LEFT_FRD_SPD 150
 #define LEFT_TRN_SPD 150
-#define RIGHT_FRD_SPD 150
-#define RIGHT_TRN_SPD 150
+#define RIGHT_FRD_SPD 160
+#define RIGHT_TRN_SPD 160
 
 // pins
 #ifdef TIVA
