@@ -155,9 +155,17 @@ inline void leftWheelBackward() {
     digitalWrite(LEFT_MOTOR_PIN2, HIGH);
 }
 
+inline void rightSpeed(uint8_t sp) {
+    analogWrite(RIGHT_MOTOR_SPD_PIN, sp);
+}
+
+inline void leftSpeed(uint8_t sp) {
+    analogWrite(LEFT_MOTOR_SPD_PIN, sp);
+}
+
 inline void speed(uint8_t left, uint8_t right) {
-    analogWrite(LEFT_MOTOR_SPD_PIN, left);
-    analogWrite(RIGHT_MOTOR_SPD_PIN, right);
+    leftSpeed(left);
+    rightSpeed(right);
 }
 
 inline void stopMotors() {
@@ -174,23 +182,28 @@ inline void moveForward() {
     leftWheelForward();
 }
 
+static void moveForwardISR_RightIR(void) {
+    bool r = rightOnLine(), l = leftOnLine();
+    int sp = (!r || (r && l)) * RIGHT_FRD_SPD;
+    rightSpeed(sp);
+}
+
+static void moveForwardISR_LeftIR(void) {
+    bool r = rightOnLine(), l = leftOnLine();
+    int sp = (!l || (r && l)) * LEFT_FRD_SPD;
+    leftSpeed(sp);
+}
+
 inline void moveForwardWithIR(int time) {
     moveForward();
 
-    while (time > 0) {
-        int s = millis();
-        bool l = leftOnLine(), r = rightOnLine();
+    attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
+    attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
 
-        if ((l && r) || (!l && !r)) {
-            speed(RIGHT_FRD_SPD, LEFT_FRD_SPD);
-        } else if (r) {
-            speed(LEFT_FRD_SPD, 0);
-        } else {  // l
-            speed(0, RIGHT_FRD_SPD);
-        }
+    delay(time);
 
-        time -= millis() - s;
-    }
+    detachInterrupt(LEFT_IR_PIN);
+    detachInterrupt(RIGHT_IR_PIN);
 
     stopMotors();
 }
@@ -201,25 +214,35 @@ inline void turnRight() {
     leftWheelForward();
 }
 
-inline void turnRightWithIR() {
-    turnRight();
-    delay(300);
-    while (leftOnLine() || rightOnLine());
-    while (!rightOnLine());
-    stopMotors();
-}
-
 inline void turnLeft() {
     speed(LEFT_TRN_SPD, RIGHT_TRN_SPD);
     rightWheelForward();
     leftWheelBackward();
 }
 
+volatile bool hasStopped;
+static void stopTurningISR(void) {
+    hasStopped = true;
+    stopMotors();
+}
+
 inline void turnLeftWithIR() {
+    hasStopped = false;
+    attachInterrupt(LEFT_IR_PIN, stopTurningISR, RISING);
+    noInterrupts();
+
     turnLeft();
-    delay(300);
     while (leftOnLine() || rightOnLine());
-    while (!leftOnLine());
+
+    interrupts();
+    while (!hasStopped);
+    detachInterrupt(LEFT_IR_PIN);
+}
+
+inline void turnRightWithIR() {
+    turnRight();
+    while (leftOnLine() || rightOnLine());
+    while (!rightOnLine());
     stopMotors();
 }
 
