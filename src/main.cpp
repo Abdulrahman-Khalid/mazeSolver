@@ -183,29 +183,27 @@ inline void moveForward() {
 }
 
 static void moveForwardISR_RightIR(void) {
-    bool r = rightOnLine(), l = leftOnLine();
-    int sp = (!r || (r && l)) * RIGHT_FRD_SPD;
-    rightSpeed(sp);
+    rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
 }
 
 static void moveForwardISR_LeftIR(void) {
-    bool r = rightOnLine(), l = leftOnLine();
-    int sp = (!l || (r && l)) * LEFT_FRD_SPD;
-    leftSpeed(sp);
+    leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
 }
 
 inline void moveForwardWithIR(int time) {
-    moveForward();
+    for (int i = 0; i < 2; i++) {
+        moveForward();
 
-    attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
-    attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
+        attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
+        attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
 
-    delay(time);
+        while (!(rightOnLine() && leftOnLine()));
 
-    detachInterrupt(LEFT_IR_PIN);
-    detachInterrupt(RIGHT_IR_PIN);
+        detachInterrupt(LEFT_IR_PIN);
+        detachInterrupt(RIGHT_IR_PIN);
 
-    stopMotors();
+        stopMotors();
+    }
 }
 
 inline void turnRight() {
@@ -220,14 +218,15 @@ inline void turnLeft() {
     leftWheelBackward();
 }
 
-volatile bool hasStopped;
+volatile bool hasStoppedTurning;
 static void stopTurningISR(void) {
-    hasStopped = true;
+    hasStoppedTurning = true;
     stopMotors();
 }
 
 inline void turnLeftWithIR() {
-    hasStopped = false;
+    hasStoppedTurning = false;
+
     attachInterrupt(LEFT_IR_PIN, stopTurningISR, RISING);
     noInterrupts();
 
@@ -235,15 +234,22 @@ inline void turnLeftWithIR() {
     while (leftOnLine() || rightOnLine());
 
     interrupts();
-    while (!hasStopped);
+    while (!hasStoppedTurning);
     detachInterrupt(LEFT_IR_PIN);
 }
 
 inline void turnRightWithIR() {
+    hasStoppedTurning = false;
+    
+    attachInterrupt(RIGHT_IR_PIN, stopTurningISR, RISING);
+    noInterrupts();
+
     turnRight();
     while (leftOnLine() || rightOnLine());
-    while (!rightOnLine());
-    stopMotors();
+
+    interrupts();
+    while (!hasStoppedTurning);
+    detachInterrupt(RIGHT_IR_PIN);
 }
 
 void reset() {
