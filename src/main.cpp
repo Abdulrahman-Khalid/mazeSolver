@@ -107,13 +107,7 @@ inline void printBlocks() {
     inline bool frontBlocked() {
         int front = ultrasonicFront.read();
         printv(front);
-        return front <= 20;
-    }
-
-    inline bool frontBlockedTight() {
-        int front = ultrasonicFront.read();
-        printv(front);
-        return front <= 5;
+        return front <= 20 && front >= 9;
     }
 
     inline bool rightBlocked() {
@@ -183,27 +177,40 @@ inline void moveForward() {
 }
 
 static void moveForwardISR_RightIR(void) {
-    rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
+    // rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
+    leftSpeed(LEFT_FRD_SPD + 60 * rightOnLine());
 }
 
 static void moveForwardISR_LeftIR(void) {
-    leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
+    // leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
+    rightSpeed(RIGHT_FRD_SPD + 60 * leftOnLine());
 }
 
-inline void moveForwardWithIR(int time) {
-    for (int i = 0; i < 2; i++) {
-        moveForward();
+inline void moveForwardWithIR() {
+    moveForward();
 
-        attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
-        attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
+    attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
+    attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
 
-        while (!(rightOnLine() && leftOnLine()));
+    while (!(rightOnLine() && leftOnLine()));
 
-        detachInterrupt(LEFT_IR_PIN);
-        detachInterrupt(RIGHT_IR_PIN);
+    detachInterrupt(LEFT_IR_PIN);
+    detachInterrupt(RIGHT_IR_PIN);
 
-        stopMotors();
-    }
+    stopMotors();
+
+    // excess
+    attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
+    attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
+
+    moveForward();
+    speed(LEFT_FRD_SPD, LEFT_FRD_SPD+40);
+    delay(300);
+
+    detachInterrupt(LEFT_IR_PIN);
+    detachInterrupt(RIGHT_IR_PIN);
+
+    stopMotors();
 }
 
 inline void turnRight() {
@@ -227,7 +234,7 @@ static void stopTurningISR(void) {
 inline void turnLeftWithIR() {
     hasStoppedTurning = false;
 
-    attachInterrupt(LEFT_IR_PIN, stopTurningISR, RISING);
+    attachInterrupt(LEFT_IR_PIN, stopTurningISR, FALLING);
     noInterrupts();
 
     turnLeft();
@@ -240,8 +247,8 @@ inline void turnLeftWithIR() {
 
 inline void turnRightWithIR() {
     hasStoppedTurning = false;
-    
-    attachInterrupt(RIGHT_IR_PIN, stopTurningISR, RISING);
+
+    attachInterrupt(RIGHT_IR_PIN, stopTurningISR, FALLING);
     noInterrupts();
 
     turnRight();
@@ -302,6 +309,12 @@ void setup() {
 }
 
 void loop() {
+    // moveForwardWithIR();
+    // turnLeftWithIR();
+    // turnRightWithIR();
+    // delay(11111);
+    // return;
+
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 
@@ -378,7 +391,7 @@ void loop() {
             print(":MOVE_FORWARD:\n");
 
 #ifdef IR_ASSISTED
-            moveForwardWithIR(TIME_MOVE);
+            moveForwardWithIR();
 #else
             moveForward();
             delay(TIME_MOVE);
