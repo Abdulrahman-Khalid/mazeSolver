@@ -202,17 +202,11 @@ inline void turnRight() {
 }
 
 inline void turnRightWithIR() {
-    // print("1\n");
     turnRight();
-    // print("2\n");
     delay(300);
-    // print("3\n");
-    while(leftOnLine() || rightOnLine());
-    // print("4\n");
+    while (leftOnLine() || rightOnLine());
     while (!rightOnLine());
-    // print("5\n");
     stopMotors();
-    // print("6\n");
 }
 
 inline void turnLeft() {
@@ -222,17 +216,11 @@ inline void turnLeft() {
 }
 
 inline void turnLeftWithIR() {
-    // print("1\n");
     turnLeft();
-    // print("2\n");
     delay(300);
-    // print("3\n");
-    while(leftOnLine() || rightOnLine());
-    // print("4\n");
+    while (leftOnLine() || rightOnLine());
     while (!leftOnLine());
-    // print("5\n");
     stopMotors();
-    // print("6\n");
 }
 
 void reset() {
