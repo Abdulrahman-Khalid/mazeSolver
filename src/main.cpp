@@ -102,26 +102,81 @@ inline void printBlocks() {
         sensI %= sizeof sensorsReadings;
     }
 #else
-    static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
+    volatile int lastFrontUS, lastRightUS, lastLeftUS;
 
     inline bool frontBlocked() {
-        int front = ultrasonicFront.read();
+        static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
+
+        float front = 0;
+        int size = 0;
+        for (int i = 0; i < US_ACCURACY; i++) {
+            int tmp = ultrasonicFront.read();
+            if (tmp != 375 && tmp != 0) { 
+                front += tmp; 
+                size++;
+            }
+        } 
+
+        if (size != 0) {
+            front /= size;
+        } else {
+            front = lastFrontUS;
+            print("--INVALID FRONT US VALUE--");
+        }
+        lastFrontUS = front;
+
         printv(front);
-        return front <= 20 && front >= 9;
+        return front <= 30 && front >= 3;
     }
 
     inline bool rightBlocked() {
         static Ultrasonic ultrasonicRight(RIGHT_US_TRIG, RIGHT_US_ECHO);
-        int right = ultrasonicRight.read();
+
+        float right = 0;
+        int size = 0;
+        for (int i = 0; i < US_ACCURACY; i++) {
+            int tmp = ultrasonicRight.read();
+            if (tmp != 375 && tmp != 0) { 
+                right += tmp; 
+                size++;
+            }
+        }
+
+        if (size != 0) {
+            right /= size;
+        } else {
+            right = lastRightUS;
+            print("--INVALID RIGHT US VALUE--");
+        }
+        lastRightUS = right;
+
         printv(right);
-        return right <= 30;
+        return right <= 40 && right >= 5;
     }
 
     inline bool leftBlocked() {
         static Ultrasonic ultrasonicLeft(LEFT_US_TRIG, LEFT_US_ECHO);
-        int left = ultrasonicLeft.read();
+
+        float left = 0;
+        int size = 0;
+        for (int i = 0; i < US_ACCURACY; i++) {
+            int tmp = ultrasonicLeft.read();
+            if (tmp != 375 && tmp != 0) {
+                left += tmp; 
+                size++;
+            }
+        }
+
+        if (size != 0) {
+            left /= US_ACCURACY;
+        } else {
+            left = lastLeftUS;
+            print("--INVALID LEFT US VALUE--");
+        }
+        lastLeftUS = left;
+
         printv(left);
-        return left <= 20;
+        return left <= 30 && left >= 5;
     }
 #endif
 
@@ -185,6 +240,7 @@ static void moveForwardISR_LeftIR(void) {
 }
 
 inline void moveForwardWithIR() {
+    // start
     moveForward();
 
     attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
@@ -192,22 +248,23 @@ inline void moveForwardWithIR() {
 
     while (!(rightOnLine() && leftOnLine()));
 
+    // stop
     detachInterrupt(LEFT_IR_PIN);
     detachInterrupt(RIGHT_IR_PIN);
-
     stopMotors();
 
-    // excess
+    // a little bit more
     attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
     attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
 
     moveForward();
     speed(LEFT_FRD_SPD, LEFT_FRD_SPD+40);
-    delay(300);
+    delay(400);
+    // while (rightOnLine() || leftOnLine());
 
+    // stop
     detachInterrupt(LEFT_IR_PIN);
     detachInterrupt(RIGHT_IR_PIN);
-
     stopMotors();
 }
 
@@ -265,6 +322,10 @@ void reset() {
     currentState = State::TAKE_DECISION;
     position = Position(START_X, START_Y);
     orientation = START_ORIENT;
+
+    lastFrontUS = 40;
+    lastRightUS = 40;
+    lastLeftUS = 40;
 
 #ifdef TEST
     sensI = 0;
@@ -324,7 +385,7 @@ void loop() {
     switch (currentState) {
         case State::TAKE_DECISION: {
             stopMotors();
-            delay(2000);
+            delay(1000);
 
             printBlocks();
             print(":TAKE_DECISION: :BEFORE:");
@@ -346,6 +407,10 @@ void loop() {
             printv(l);
             printv(f);
             printv(r);
+            // print("\n");
+            // return;
+
+            delay(1000);
 
 #ifdef TEST
             advanceTest();

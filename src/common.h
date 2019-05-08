@@ -71,6 +71,8 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #define LEFT_TRN_SPD 180
 #define RIGHT_TRN_SPD 180
 
+#define US_ACCURACY 50
+
 // pins
 #ifdef TIVA
     #define LEFT_MOTOR_PIN1 PE_3
@@ -121,14 +123,14 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 
 #ifndef TEST
     #define MAZE_HEIGHT 2
-    #define MAZE_LENGTH 2
+    #define MAZE_LENGTH 4
 
-    #define TARGET_X 1
+    #define TARGET_X 0
     #define TARGET_Y 0
 
-    #define START_X 0
-    #define START_Y 0
-    #define START_ORIENT Orientation::SOUTH
+    #define START_X 3
+    #define START_Y 1
+    #define START_ORIENT Orientation::WEST
 #endif
 
 #ifdef TEST
