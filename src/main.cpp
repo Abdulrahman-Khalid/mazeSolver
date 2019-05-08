@@ -177,13 +177,11 @@ inline void moveForward() {
 }
 
 static void moveForwardISR_RightIR(void) {
-    // rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
-    leftSpeed(LEFT_FRD_SPD + 60 * rightOnLine());
+    rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
 }
 
 static void moveForwardISR_LeftIR(void) {
-    // leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
-    rightSpeed(RIGHT_FRD_SPD + 60 * leftOnLine());
+    leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
 }
 
 inline void moveForwardWithIR() {
@@ -309,12 +307,6 @@ void setup() {
 }
 
 void loop() {
-    // moveForwardWithIR();
-    // turnLeftWithIR();
-    // turnRightWithIR();
-    // delay(11111);
-    // return;
-
     if (!start) {
         start = digitalRead(START_BUTTON_PIN);
 
