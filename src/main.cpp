@@ -2,7 +2,7 @@
 // #define TEST_CASE 0
 #define SERIAL
 #define IR_ASSISTED
-// #define USE_EEPROM
+#define USE_EEPROM
 
 #include "Maze.h"
 #include "common.h"
@@ -104,28 +104,29 @@ inline void printBlocks() {
         sensI %= sizeof sensorsReadings;
     }
 #else
-    volatile int lastFrontUS, lastRightUS, lastLeftUS;
+    void adjust();
 
     inline bool frontBlocked() {
         static Ultrasonic ultrasonicFront(FRONT_US_TRIG, FRONT_US_ECHO);
 
-        float front = 0;
-        int size = 0;
-        for (int i = 0; i < US_ACCURACY; i++) {
-            int tmp = ultrasonicFront.read();
-            if (tmp != 375 && tmp != 0) { 
-                front += tmp; 
-                size++;
-            }
-        } 
+        float front = ultrasonicFront.read();
+        if (front == 0) {
+            int size = 0;
+            for (int i = 0; i < US_ACCURACY; i++) {
+                int tmp = ultrasonicFront.read();
+                if (tmp < 300 && tmp != 0) { 
+                    front += tmp; 
+                    size++;
+                }
+            } 
 
-        if (size != 0) {
-            front /= size;
-        } else {
-            front = lastFrontUS;
-            print("--INVALID FRONT US VALUE--");
+            if (size != 0) {
+                front /= size;
+            } else {
+                print("--INVALID FRONT US VALUE--");
+                adjust();
+            }
         }
-        lastFrontUS = front;
 
         printv(front);
         return front <= 30 && front >= 3;
@@ -134,23 +135,25 @@ inline void printBlocks() {
     inline bool rightBlocked() {
         static Ultrasonic ultrasonicRight(RIGHT_US_TRIG, RIGHT_US_ECHO);
 
-        float right = 0;
-        int size = 0;
-        for (int i = 0; i < US_ACCURACY; i++) {
-            int tmp = ultrasonicRight.read();
-            if (tmp != 375 && tmp != 0) { 
-                right += tmp; 
-                size++;
+        float right = ultrasonicRight.read();
+        if (right == 0) {
+            int size = 0;
+            for (int i = 0; i < US_ACCURACY; i++) {
+                int tmp = ultrasonicRight.read();
+                if (tmp < 300 && tmp != 0) { 
+                    right += tmp; 
+                    size++;
+                }
+            }
+
+            if (size != 0) {
+                right /= size;
+            } else {
+                print("--INVALID RIGHT US VALUE--");
+                adjust();
+                
             }
         }
-
-        if (size != 0) {
-            right /= size;
-        } else {
-            right = lastRightUS;
-            print("--INVALID RIGHT US VALUE--");
-        }
-        lastRightUS = right;
 
         printv(right);
         return right <= 40 && right >= 5;
@@ -159,23 +162,24 @@ inline void printBlocks() {
     inline bool leftBlocked() {
         static Ultrasonic ultrasonicLeft(LEFT_US_TRIG, LEFT_US_ECHO);
 
-        float left = 0;
-        int size = 0;
-        for (int i = 0; i < US_ACCURACY; i++) {
-            int tmp = ultrasonicLeft.read();
-            if (tmp != 375 && tmp != 0) {
-                left += tmp; 
-                size++;
+        float left = ultrasonicLeft.read();
+        if (left == 0) {
+            int size = 0;
+            for (int i = 0; i < US_ACCURACY; i++) {
+                int tmp = ultrasonicLeft.read();
+                if (tmp < 300 && tmp != 0) {
+                    left += tmp; 
+                    size++;
+                }
+            }
+
+            if (size != 0) {
+                left /= US_ACCURACY;
+            } else {
+                print("--INVALID LEFT US VALUE--");
+                adjust();
             }
         }
-
-        if (size != 0) {
-            left /= US_ACCURACY;
-        } else {
-            left = lastLeftUS;
-            print("--INVALID LEFT US VALUE--");
-        }
-        lastLeftUS = left;
 
         printv(left);
         return left <= 30 && left >= 5;
@@ -231,6 +235,20 @@ inline void moveForward() {
     speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
     rightWheelForward();
     leftWheelForward();
+}
+
+inline void moveBackward() {
+    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
+    rightWheelBackward();
+    leftWheelBackward();
+}
+
+void adjust() {
+    moveBackward();
+    delay(150);
+    moveForward();
+    delay(150);
+    stopMotors();
 }
 
 static void moveForwardISR_RightIR(void) {
@@ -290,13 +308,11 @@ static void stopTurningISR(void) {
 inline void turnLeftWithIR() {
     hasStoppedTurning = false;
 
-    attachInterrupt(LEFT_IR_PIN, stopTurningISR, FALLING);
-    noInterrupts();
-
     turnLeft();
+    delay(200);
     while (leftOnLine() || rightOnLine());
 
-    interrupts();
+    attachInterrupt(LEFT_IR_PIN, stopTurningISR, FALLING);
     while (!hasStoppedTurning);
     detachInterrupt(LEFT_IR_PIN);
 }
@@ -304,13 +320,11 @@ inline void turnLeftWithIR() {
 inline void turnRightWithIR() {
     hasStoppedTurning = false;
 
-    attachInterrupt(RIGHT_IR_PIN, stopTurningISR, FALLING);
-    noInterrupts();
-
     turnRight();
+    delay(200);
     while (leftOnLine() || rightOnLine());
 
-    interrupts();
+    attachInterrupt(RIGHT_IR_PIN, stopTurningISR, FALLING);
     while (!hasStoppedTurning);
     detachInterrupt(RIGHT_IR_PIN);
 }
@@ -363,10 +377,6 @@ void resetToStart() {
     position = Position(START_X, START_Y);
     orientation = START_ORIENT;
 
-    lastFrontUS = 40;
-    lastRightUS = 40;
-    lastLeftUS = 40;
-
     #ifdef TEST
         sensI = 0;
     #endif
@@ -382,9 +392,14 @@ static void resetAll() {
 
 void setup() {
     serialBegin(9600);
-    delay(500);
 
-    print("started setup\n");
+    #ifdef TEST
+        print(":IN TEST MODE #");
+        printv(TEST_CASE);
+        print("\n");
+    #endif
+
+    print(":START SETUP:\n");
 
     pinMode(LEFT_MOTOR_PIN1, OUTPUT);
     pinMode(LEFT_MOTOR_PIN2, OUTPUT);
@@ -394,7 +409,7 @@ void setup() {
     pinMode(RIGHT_MOTOR_SPD_PIN, OUTPUT);
     pinMode(LEFT_IR_PIN, INPUT);
     pinMode(RIGHT_IR_PIN, INPUT);
-    pinMode(START_BUTTON_PIN, INPUT);
+    pinMode(RESET_BUTTON_PIN, INPUT);
 
     #ifdef USE_EEPROM
         if (hasToLoad()) {
@@ -404,23 +419,15 @@ void setup() {
             print(":NO LOADING:");
             resetAll();
         }
+
+        attachInterrupt(RESET_BUTTON_PIN, resetAll, RISING);
     #else
         resetAll();
     #endif
 
-    attachInterrupt(RESET_BUTTON_PIN, resetAll, RISING);
-    attachInterrupt(START_BUTTON_PIN, resetToStart, RISING);
-
-    print("ended setup\n");
-
-    delay(2000);
-    print("started loop\n");
-
-    #ifdef TEST
-        print("in test mode\n");
-        printv(TEST_CASE);
-        print("\n");
-    #endif
+    print(":END:\n");
+    delay(3000);
+    print(":START LOOP:\n");
 }
 
 void loop() {

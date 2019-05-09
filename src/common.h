@@ -101,8 +101,7 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
     #define LEFT_US_TRIG PB_1
     #define LEFT_US_ECHO PA_6
 
-    #define START_BUTTON_PIN PA_4
-    #define RESET_BUTTON_PIN PF_2
+    #define RESET_BUTTON_PIN PA_4
 
     #define RIGHT_IR_PIN PA_2
     #define LEFT_IR_PIN PA_3
@@ -124,8 +123,7 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
     #define LEFT_US_TRIG 8
     #define LEFT_US_ECHO 5
 
-    #define START_BUTTON_PIN 9
-    #define RESET_BUTTON_PIN 0
+    #define RESET_BUTTON_PIN 9
 
     // unused
     #define RIGHT_IR_PIN 0
@@ -133,15 +131,15 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #endif
 
 #ifndef TEST
-    #define MAZE_HEIGHT 2
-    #define MAZE_LENGTH 4
+    #define MAZE_LENGTH 5
+    #define MAZE_HEIGHT 3
 
-    #define TARGET_X 0
-    #define TARGET_Y 0
+    #define START_X 0
+    #define START_Y 0
+    #define START_ORIENT Orientation::EAST
 
-    #define START_X 3
-    #define START_Y 1
-    #define START_ORIENT Orientation::WEST
+    #define TARGET_X 3
+    #define TARGET_Y 2
 #endif
 
 #ifdef TEST
