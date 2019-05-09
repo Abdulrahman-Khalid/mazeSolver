@@ -330,24 +330,21 @@ void save() {
 void load() {
     print("\n:EEPROM LOAD:");
 
-    int i = 0;
-    if (EEPROM.read(i++) == 1) {
-        print(":CAN LOAD:");
-        position.x = EEPROM.read(i++);
-        position.y = EEPROM.read(i++);
-        orientation = (Orientation) EEPROM.read(i++);
-        currentState = (State) EEPROM.read(i++);
+    int i = 1;
+    position.x = EEPROM.read(i++);
+    position.y = EEPROM.read(i++);
+    orientation = (Orientation) EEPROM.read(i++);
+    currentState = (State) EEPROM.read(i++);
 
-        maze.load(i);
-        print(":END:");
-    } else {
-        print(":NO LOADING:");
-    }
-
-    print("\n");
+    maze.load(i);
+    print(":END:\n");
 }
 
-void reset() {
+bool hasToLoad() {
+    return EEPROM.read(0) == 1;
+}
+
+void resetToStart() {
     print("resetting..\n");
 
     stopMotors();
@@ -364,12 +361,12 @@ void reset() {
     sensI = 0;
 #endif
 
-    print("reset finished\n");
+    print("resetToStart finished\n");
 }
 
-static void resetAllISR() {
+static void resetAll() {
     EEPROM.update(0, 0);
-    reset();
+    resetToStart();
     maze.init();
 }
 
@@ -389,11 +386,16 @@ void setup() {
     pinMode(RIGHT_IR_PIN, INPUT);
     pinMode(START_BUTTON_PIN, INPUT);
 
-    reset();
-    maze.init();
+    if (hasToLoad()) {
+        print(":HAS TO LOAD:");
+        load();
+    } else {
+        print(":NO LOADING:");
+        resetAll();
+    }
 
-    attachInterrupt(RESET_BUTTON_PIN, resetAllISR, RISING);
-    attachInterrupt(START_BUTTON_PIN, reset, RISING);
+    attachInterrupt(RESET_BUTTON_PIN, resetAll, RISING);
+    attachInterrupt(START_BUTTON_PIN, resetToStart, RISING);
 
     print("ended setup\n");
 
@@ -413,7 +415,8 @@ void loop() {
     switch (currentState) {
         case State::TAKE_DECISION: {
             stopMotors();
-            delay(1000);
+            save();
+            delay(2000);
 
             printBlocks();
             print(":TAKE_DECISION: :BEFORE:");
@@ -435,10 +438,6 @@ void loop() {
             printv(l);
             printv(f);
             printv(r);
-            // print("\n");
-            // return;
-
-            delay(1000);
 
 #ifdef TEST
             advanceTest();
@@ -473,6 +472,7 @@ void loop() {
         }
 
         case State::MOVE_FORWARD: {
+            save();
             print(":MOVE_FORWARD:\n");
 
 #ifdef IR_ASSISTED
@@ -488,6 +488,7 @@ void loop() {
         }
 
         case State::TURN_180: {
+            save();
             print(":TURN_BACK:\n");
 
 #ifdef IR_ASSISTED
@@ -507,6 +508,7 @@ void loop() {
         }
 
         case State::TURN_RIGHT: {
+            save();
             print(":TURN_RIGHT:\n");
 
 #ifdef IR_ASSISTED
@@ -524,6 +526,7 @@ void loop() {
         }
 
         case State::TURN_LEFT: {
+            save();
             print(":TURN_LEFT:\n");
 
 #ifdef IR_ASSISTED
