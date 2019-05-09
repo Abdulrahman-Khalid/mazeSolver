@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #endif
 
+#include <EEPROM.h>
 #include <Ultrasonic.h>
 
 #ifdef SERIAL
@@ -93,6 +94,7 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
     #define LEFT_US_ECHO PA_6
 
     #define START_BUTTON_PIN PA_4
+    #define RESET_BUTTON_PIN PF_2
 
     #define RIGHT_IR_PIN PA_2
     #define LEFT_IR_PIN PA_3
@@ -115,6 +117,7 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
     #define LEFT_US_ECHO 5
 
     #define START_BUTTON_PIN 9
+    #define RESET_BUTTON_PIN 0
 
     // unused
     #define RIGHT_IR_PIN 0

@@ -260,7 +260,6 @@ inline void moveForwardWithIR() {
     moveForward();
     speed(LEFT_FRD_SPD, LEFT_FRD_SPD+40);
     delay(400);
-    // while (rightOnLine() || leftOnLine());
 
     // stop
     detachInterrupt(LEFT_IR_PIN);
@@ -314,11 +313,45 @@ inline void turnRightWithIR() {
     detachInterrupt(RIGHT_IR_PIN);
 }
 
+void save() {
+    print("\n:EEPROM SAVE:");
+    int i = 0;
+
+    EEPROM.update(i++, 1);
+    EEPROM.update(i++, position.x);
+    EEPROM.update(i++, position.y);
+    EEPROM.update(i++, orientation);
+    EEPROM.update(i++, currentState);
+
+    maze.save(i);
+    print(":END:\n");
+}
+
+void load() {
+    print("\n:EEPROM LOAD:");
+
+    int i = 0;
+    if (EEPROM.read(i++) == 1) {
+        print(":CAN LOAD:");
+        position.x = EEPROM.read(i++);
+        position.y = EEPROM.read(i++);
+        orientation = (Orientation) EEPROM.read(i++);
+        currentState = (State) EEPROM.read(i++);
+
+        maze.load(i);
+        print(":END:");
+    } else {
+        print(":NO LOADING:");
+    }
+
+    print("\n");
+}
+
 void reset() {
     print("resetting..\n");
 
     stopMotors();
-    start = false;
+    start = true;  // TODO, setup push button
     currentState = State::TAKE_DECISION;
     position = Position(START_X, START_Y);
     orientation = START_ORIENT;
@@ -332,6 +365,12 @@ void reset() {
 #endif
 
     print("reset finished\n");
+}
+
+static void resetAllISR() {
+    EEPROM.update(0, 0);
+    reset();
+    maze.init();
 }
 
 void setup() {
@@ -353,12 +392,13 @@ void setup() {
     reset();
     maze.init();
 
+    attachInterrupt(RESET_BUTTON_PIN, resetAllISR, RISING);
+    attachInterrupt(START_BUTTON_PIN, reset, RISING);
+
     print("ended setup\n");
 
     delay(2000);
     print("started loop\n");
-
-    start = true;  // TODO, setup push button
 
 #ifdef TEST
     print("in test mode\n");
@@ -368,19 +408,7 @@ void setup() {
 }
 
 void loop() {
-    if (!start) {
-        start = digitalRead(START_BUTTON_PIN);
-
-#ifdef SERIAL
-        start = start || Serial.read() != -1;
-#endif
-
-        if (start) {
-            reset();
-        } else {
-            return;
-        }
-    }
+    while (!start);
 
     switch (currentState) {
         case State::TAKE_DECISION: {

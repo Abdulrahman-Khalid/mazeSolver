@@ -14,6 +14,19 @@ class Maze {
         uint8_t : 3;
 
         uint8_t value;
+
+        void save(int& i) {
+            uint8_t* ptr = (uint8_t*) this;
+            EEPROM.update(i++, *(ptr++));
+            EEPROM.update(i++, *ptr);
+        }
+
+        static Cell load(int& i) {
+            uint8_t* ptr = (uint8_t*) malloc(sizeof(Cell));
+            *ptr = EEPROM.read(i++);
+            *(ptr+1) = EEPROM.read(i++);
+            return *(Cell*)ptr;
+        }
     } cells[MAZE_LENGTH][MAZE_HEIGHT];
     //     [     X     ][     Y     ]
 
@@ -193,5 +206,21 @@ class Maze {
 
     bool finished() {
         return position->x == TARGET_X && position->y == TARGET_Y;
+    }
+
+    void save(int& i) {
+        for (int i = 0; i < MAZE_LENGTH; i++) {
+            for (int j = 0; j < MAZE_HEIGHT; j++) {
+                cells[i][j].save(i);
+            }
+        }
+    }
+
+    void load(int& i) {
+        for (int i = 0; i < MAZE_LENGTH; i++) {
+            for (int j = 0; j < MAZE_HEIGHT; j++) {
+                cells[i][j] = Cell::load(i);
+            }
+        }
     }
 };

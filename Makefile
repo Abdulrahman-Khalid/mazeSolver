@@ -1,5 +1,5 @@
 PIO='${HOME}/.local/bin/pio'
-ENV='uno_dev'
+ENV='tiva'
 BAUD=9600
 
 compile: src/* lib/* include/*
