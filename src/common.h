@@ -2,42 +2,50 @@
 #include <stdint.h>
 
 #ifdef TIVA
-#include <Energia.h>
-#include <pins_energia.h>
+    #include <Energia.h>
+    #include <pins_energia.h>
 #else
-#include <Arduino.h>
+    #include <Arduino.h>
 #endif
 
-#include <EEPROM.h>
 #include <Ultrasonic.h>
 
 #ifdef SERIAL
-#define print(n) Serial.print(n)
-#define printv(n)  \
-    print(#n "="); \
-    print(n);      \
-    print(",")
-#define serialBegin(n) Serial.begin(n)
+    #define print(n) Serial.print(n)
+    #define printv(n)  \
+        print(#n "="); \
+        print(n);      \
+        print(",")
+    #define serialBegin(n) Serial.begin(n)
 #else
-#define printv(n)
-#define print(n)
-#define serialBegin(n)
+    #define printv(n)
+    #define print(n)
+    #define serialBegin(n)
+#endif
+
+#ifdef USE_EEPROM
+    #include <EEPROM.h>
+    #define eepromUpdate(i, j) EEPROM.update(i, j)
+    #define eepromRead(i) EEPROM.read(i)
+#else
+    #define eepromUpdate(i, j)
+    #define eepromRead(i)
 #endif
 
 #ifdef TEST
-#define assert(n)                                       \
-    do {                                                \
-        if (!(n)) {                                     \
-            print("\nASSERTION FAILED: " __FILE__ ":"); \
-            print(__LINE__);                            \
-            print(":   " #n "\n");                      \
-            print("\nHALT\n");                          \
-            while (1)                                   \
-                ;                                       \
-        }                                               \
-    } while (0)
+    #define assert(n)                                       \
+        do {                                                \
+            if (!(n)) {                                     \
+                print("\nASSERTION FAILED: " __FILE__ ":"); \
+                print(__LINE__);                            \
+                print(":   " #n "\n");                      \
+                print("\nHALT\n");                          \
+                while (1)                                   \
+                    ;                                       \
+            }                                               \
+        } while (0)
 #else
-#define assert(n)
+    #define assert(n)
 #endif
 
 #define halt()             \

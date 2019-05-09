@@ -17,14 +17,14 @@ class Maze {
 
         void save(int& i) {
             uint8_t* ptr = (uint8_t*) this;
-            EEPROM.update(i++, *(ptr++));
-            EEPROM.update(i++, *ptr);
+            eepromUpdate(i++, *(ptr++));
+            eepromUpdate(i++, *ptr);
         }
 
         static Cell load(int& i) {
             uint8_t* ptr = (uint8_t*) malloc(sizeof(Cell));
-            *ptr = EEPROM.read(i++);
-            *(ptr+1) = EEPROM.read(i++);
+            *ptr = eepromRead(i++);
+            *(ptr+1) = eepromRead(i++);
             return *(Cell*)ptr;
         }
     } cells[MAZE_LENGTH][MAZE_HEIGHT];
@@ -54,46 +54,46 @@ class Maze {
         }
     }
 
-    inline Direction whereToGo() {
+    inline Direction whereToGo(Position* p) {
         uint8_t minvalue = UINT8_MAX;
         Direction dir = Direction::STOP;
-        Position newPos = *position;
-        auto &c = cells[position->x][position->y];
+        Position newPos = *p;
+        auto &c = cells[p->x][p->y];
 
-        if (c.up == 0 && cells[position->x][position->y - 1].value < minvalue) {
-            minvalue = cells[position->x][position->y - 1].value;
+        if (c.up == 0 && cells[p->x][p->y - 1].value < minvalue) {
+            minvalue = cells[p->x][p->y - 1].value;
             dir = Direction::FRONT;
-            newPos = Position(position->x, position->y - 1);
+            newPos = Position(p->x, p->y - 1);
 
             assert(newPos.y != 255);
         }
 
         if (c.right == 0 &&
-            cells[position->x + 1][position->y].value < minvalue) {
-            minvalue = cells[position->x + 1][position->y].value;
+            cells[p->x + 1][p->y].value < minvalue) {
+            minvalue = cells[p->x + 1][p->y].value;
             dir = Direction::RIGHT;
-            newPos = Position(position->x + 1, position->y);
+            newPos = Position(p->x + 1, p->y);
         }
 
         if (c.left == 0 &&
-            cells[position->x - 1][position->y].value < minvalue) {
-            minvalue = cells[position->x - 1][position->y].value;
+            cells[p->x - 1][p->y].value < minvalue) {
+            minvalue = cells[p->x - 1][p->y].value;
             dir = Direction::LEFT;
-            newPos = Position(position->x - 1, position->y);
+            newPos = Position(p->x - 1, p->y);
 
             assert(newPos.x != 255);
         }
 
         if (c.down == 0 &&
-            cells[position->x][position->y + 1].value < minvalue) {
-            minvalue = cells[position->x][position->y + 1].value;
+            cells[p->x][p->y + 1].value < minvalue) {
+            minvalue = cells[p->x][p->y + 1].value;
             dir = Direction::BACK;
-            newPos = Position(position->x, position->y + 1);
+            newPos = Position(p->x, p->y + 1);
         }
 
         assert(newPos.x < MAZE_LENGTH && newPos.y < MAZE_HEIGHT);
 
-        *position = newPos;
+        *p = newPos;
         return dir;
     }
 

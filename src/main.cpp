@@ -2,6 +2,7 @@
 // #define TEST_CASE 0
 #define SERIAL
 #define IR_ASSISTED
+#define USE_EEPROM
 
 #include "Maze.h"
 #include "common.h"
@@ -21,12 +22,13 @@ Position position(START_X, START_Y);
 Maze maze(&position, &orientation);
 bool start;
 
-inline Orientation calcOrientation(Direction relativeDir,
+inline Orientation calcOrientation(Direction dir,
                                    Orientation orientation) {
-    return Orientation((orientation + relativeDir) % 4);
+    return Orientation((orientation + dir) % 4);
 }
 
 inline Direction calcRelativeDir(Direction absDir, Orientation orientation) {
+    if (absDir == STOP) return STOP;
     return Direction((absDir - orientation + 4) % 4);
 }
 
@@ -314,34 +316,38 @@ inline void turnRightWithIR() {
 }
 
 void save() {
+#ifdef USE_EEPROM
     print("\n:EEPROM SAVE:");
     int i = 0;
 
-    EEPROM.update(i++, 1);
-    EEPROM.update(i++, position.x);
-    EEPROM.update(i++, position.y);
-    EEPROM.update(i++, orientation);
-    EEPROM.update(i++, currentState);
+    eepromUpdate(i++, 1);
+    eepromUpdate(i++, position.x);
+    eepromUpdate(i++, position.y);
+    eepromUpdate(i++, orientation);
+    eepromUpdate(i++, currentState);
 
     maze.save(i);
     print(":END:\n");
+#endif
 }
 
 void load() {
+#ifdef USE_EEPROM
     print("\n:EEPROM LOAD:");
 
     int i = 1;
-    position.x = EEPROM.read(i++);
-    position.y = EEPROM.read(i++);
-    orientation = (Orientation) EEPROM.read(i++);
-    currentState = (State) EEPROM.read(i++);
+    position.x = eepromRead(i++);
+    position.y = eepromRead(i++);
+    orientation = (Orientation) eepromRead(i++);
+    currentState = (State) eepromRead(i++);
 
     maze.load(i);
     print(":END:\n");
+#endif
 }
 
 bool hasToLoad() {
-    return EEPROM.read(0) == 1;
+    return eepromRead(0) == 1;
 }
 
 void resetToStart() {
@@ -357,15 +363,15 @@ void resetToStart() {
     lastRightUS = 40;
     lastLeftUS = 40;
 
-#ifdef TEST
-    sensI = 0;
-#endif
+    #ifdef TEST
+        sensI = 0;
+    #endif
 
     print("resetToStart finished\n");
 }
 
 static void resetAll() {
-    EEPROM.update(0, 0);
+    eepromUpdate(0, 0);
     resetToStart();
     maze.init();
 }
@@ -386,13 +392,17 @@ void setup() {
     pinMode(RIGHT_IR_PIN, INPUT);
     pinMode(START_BUTTON_PIN, INPUT);
 
-    if (hasToLoad()) {
-        print(":HAS TO LOAD:");
-        load();
-    } else {
-        print(":NO LOADING:");
+    #ifdef USE_EEPROM
+        if (hasToLoad()) {
+            print(":HAS TO LOAD:");
+            load();
+        } else {
+            print(":NO LOADING:");
+            resetAll();
+        }
+    #else
         resetAll();
-    }
+    #endif
 
     attachInterrupt(RESET_BUTTON_PIN, resetAll, RISING);
     attachInterrupt(START_BUTTON_PIN, resetToStart, RISING);
@@ -402,11 +412,11 @@ void setup() {
     delay(2000);
     print("started loop\n");
 
-#ifdef TEST
-    print("in test mode\n");
-    printv(TEST_CASE);
-    print("\n");
-#endif
+    #ifdef TEST
+        print("in test mode\n");
+        printv(TEST_CASE);
+        print("\n");
+    #endif
 }
 
 void loop() {
@@ -439,33 +449,33 @@ void loop() {
             printv(f);
             printv(r);
 
-#ifdef TEST
-            advanceTest();
-#endif
+            #ifdef TEST
+                advanceTest();
+            #endif
 
             maze.updateCellsValues();
-            Direction absDir = maze.whereToGo();  // updates position
-            Direction relativeDir = calcRelativeDir(absDir, orientation);
-            orientation = calcOrientation(relativeDir, orientation);
+            Direction absDir = maze.whereToGo(&position);
+            Direction dir = calcRelativeDir(absDir, orientation);
+            orientation = calcOrientation(dir, orientation);
 
             print(" :AFTER:");
 
-            if (absDir == Direction::STOP) {
+            if (dir == Direction::STOP) {
                 print(":STOPPED:");
                 stopMotors();
                 halt();
-            } else if (relativeDir == Direction::FRONT) {
+            } else if (dir == Direction::FRONT) {
                 currentState = State::MOVE_FORWARD;
-            } else if (relativeDir == Direction::RIGHT) {
+            } else if (dir == Direction::RIGHT) {
                 currentState = State::TURN_RIGHT;
-            } else if (relativeDir == Direction::LEFT) {
+            } else if (dir == Direction::LEFT) {
                 currentState = State::TURN_LEFT;
             } else {
                 currentState = State::TURN_180;
             }
 
             printv(int(absDir));
-            printv(int(relativeDir));
+            printv(int(dir));
             print(":END:\n");
 
             break;
@@ -475,12 +485,12 @@ void loop() {
             save();
             print(":MOVE_FORWARD:\n");
 
-#ifdef IR_ASSISTED
-            moveForwardWithIR();
-#else
-            moveForward();
-            delay(TIME_MOVE);
-#endif
+            #ifdef IR_ASSISTED
+                moveForwardWithIR();
+            #else
+                moveForward();
+                delay(TIME_MOVE);
+            #endif
             stopMotors();
 
             currentState = State::TAKE_DECISION;
@@ -491,16 +501,16 @@ void loop() {
             save();
             print(":TURN_BACK:\n");
 
-#ifdef IR_ASSISTED
-            turnRightWithIR();
-            stopMotors();
-            turnRightWithIR();
-            stopMotors();
-#else
-            turnRight();
-            delay(TIME_TURN_180);
-            stopMotors();
-#endif
+            #ifdef IR_ASSISTED
+                turnRightWithIR();
+                stopMotors();
+                turnRightWithIR();
+                stopMotors();
+            #else
+                turnRight();
+                delay(TIME_TURN_180);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
@@ -511,14 +521,14 @@ void loop() {
             save();
             print(":TURN_RIGHT:\n");
 
-#ifdef IR_ASSISTED
-            turnRightWithIR();
-            stopMotors();
-#else
-            turnRight();
-            delay(TIME_TURN_90);
-            stopMotors();
-#endif
+            #ifdef IR_ASSISTED
+                turnRightWithIR();
+                stopMotors();
+            #else
+                turnRight();
+                delay(TIME_TURN_90);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
@@ -529,14 +539,14 @@ void loop() {
             save();
             print(":TURN_LEFT:\n");
 
-#ifdef IR_ASSISTED
-            turnLeftWithIR();
-            stopMotors();
-#else
-            turnLeft();
-            delay(TIME_TURN_90);
-            stopMotors();
-#endif
+            #ifdef IR_ASSISTED
+                turnLeftWithIR();
+                stopMotors();
+            #else
+                turnLeft();
+                delay(TIME_TURN_90);
+                stopMotors();
+            #endif
             delay(500);
 
             currentState = State::MOVE_FORWARD;
