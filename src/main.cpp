@@ -2,7 +2,7 @@
 // #define TEST_CASE 0
 #define SERIAL
 #define IR_ASSISTED
-#define USE_EEPROM
+// #define USE_EEPROM
 
 #include "Maze.h"
 #include "common.h"
@@ -347,7 +347,11 @@ void load() {
 }
 
 bool hasToLoad() {
-    return eepromRead(0) == 1;
+    #ifdef USE_EEPROM
+        return eepromRead(0) == 1;
+    #else
+        return false;
+    #endif
 }
 
 void resetToStart() {

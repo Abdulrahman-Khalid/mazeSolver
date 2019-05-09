@@ -16,16 +16,20 @@ class Maze {
         uint8_t value;
 
         void save(int& i) {
-            uint8_t* ptr = (uint8_t*) this;
-            eepromUpdate(i++, *(ptr++));
-            eepromUpdate(i++, *ptr);
+            #ifdef USE_EEPROM
+                uint8_t* ptr = (uint8_t*) this;
+                eepromUpdate(i++, *(ptr++));
+                eepromUpdate(i++, *ptr);
+            #endif
         }
 
         static Cell load(int& i) {
-            uint8_t* ptr = (uint8_t*) malloc(sizeof(Cell));
-            *ptr = eepromRead(i++);
-            *(ptr+1) = eepromRead(i++);
-            return *(Cell*)ptr;
+            #ifdef USE_EEPROM
+                uint8_t* ptr = (uint8_t*) malloc(sizeof(Cell));
+                *ptr = eepromRead(i++);
+                *(ptr+1) = eepromRead(i++);
+                return *(Cell*)ptr;
+            #endif
         }
     } cells[MAZE_LENGTH][MAZE_HEIGHT];
     //     [     X     ][     Y     ]
