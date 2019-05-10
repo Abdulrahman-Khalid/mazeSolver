@@ -37,6 +37,7 @@ class Maze {
     Queue q;
     Position *position;
     Orientation *orientation;
+    bool isConnected = false;
 
     Maze(Position *position, Orientation *orientation)
         : q(sizeof(Position), MAZE_HEIGHT * MAZE_LENGTH),
@@ -63,6 +64,8 @@ class Maze {
         Direction dir = Direction::STOP;
         Position newPos = *p;
         auto &c = cells[p->x][p->y];
+
+        if (!isConnected) return Direction::STOP;
 
         if (c.up == 0 && cells[p->x][p->y - 1].value < minvalue) {
             minvalue = cells[p->x][p->y - 1].value;
@@ -156,6 +159,8 @@ class Maze {
         auto result = q.push(&p);
         assert(result);
 
+        isConnected = false;
+
         while (q.pop(&p)) {
             auto &c = cells[p.x][p.y];
             Position p2(0, 0);
@@ -203,6 +208,9 @@ class Maze {
 
         for (int i = 0; i < MAZE_LENGTH; i++) {
             for (int j = 0; j < MAZE_HEIGHT; j++) {
+                if (cells[i][j].visited && i == position->x && j == position->y) {
+                    isConnected = true;
+                }
                 cells[i][j].visited = false;
             }
         }

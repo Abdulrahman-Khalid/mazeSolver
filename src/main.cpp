@@ -2,7 +2,7 @@
 // #define TEST_CASE 0
 #define SERIAL
 #define IR_ASSISTED
-#define USE_EEPROM
+// #define USE_EEPROM
 
 #include "Maze.h"
 #include "common.h"
@@ -124,12 +124,11 @@ inline void printBlocks() {
                 front /= size;
             } else {
                 print("--INVALID FRONT US VALUE--");
-                adjust();
             }
         }
 
         printv(front);
-        return front <= 30 && front >= 3;
+        return front <= 30;
     }
 
     inline bool rightBlocked() {
@@ -150,13 +149,12 @@ inline void printBlocks() {
                 right /= size;
             } else {
                 print("--INVALID RIGHT US VALUE--");
-                adjust();
                 
             }
         }
 
         printv(right);
-        return right <= 40 && right >= 5;
+        return right <= 40;
     }
 
     inline bool leftBlocked() {
@@ -177,12 +175,11 @@ inline void printBlocks() {
                 left /= US_ACCURACY;
             } else {
                 print("--INVALID LEFT US VALUE--");
-                adjust();
             }
         }
 
         printv(left);
-        return left <= 30 && left >= 5;
+        return left <= 30;
     }
 #endif
 
@@ -252,11 +249,27 @@ void adjust() {
 }
 
 static void moveForwardISR_RightIR(void) {
-    rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
+    // rightSpeed(!rightOnLine() * RIGHT_FRD_SPD);
+    // if (rightOnLine()) {
+    //     rightSpeed(100);
+    // } else {
+    //     rightSpeed(RIGHT_FRD_SPD);
+    // }
+    if (rightOnLine()) {
+        rightWheelBackward();
+    } else {
+        rightWheelForward();
+    }
 }
 
 static void moveForwardISR_LeftIR(void) {
-    leftSpeed(!leftOnLine() * LEFT_FRD_SPD);
+    if (leftOnLine()) {
+        // leftSpeed(-LEFT_FRD_SPD);
+        leftWheelBackward();
+    } else {
+        // leftSpeed(LEFT_FRD_SPD);
+        leftWheelForward();
+    }
 }
 
 inline void moveForwardWithIR() {
@@ -268,23 +281,17 @@ inline void moveForwardWithIR() {
 
     while (!(rightOnLine() && leftOnLine()));
 
-    // stop
-    detachInterrupt(LEFT_IR_PIN);
-    detachInterrupt(RIGHT_IR_PIN);
-    stopMotors();
-
-    // a little bit more
-    attachInterrupt(LEFT_IR_PIN, moveForwardISR_LeftIR, CHANGE);
-    attachInterrupt(RIGHT_IR_PIN, moveForwardISR_RightIR, CHANGE);
-
     moveForward();
-    speed(LEFT_FRD_SPD, LEFT_FRD_SPD+40);
-    delay(400);
+    speed(230, 230);
+    delay(350);
 
     // stop
+    noInterrupts();
+    stopMotors();
+    speed(LEFT_FRD_SPD, RIGHT_FRD_SPD);
     detachInterrupt(LEFT_IR_PIN);
     detachInterrupt(RIGHT_IR_PIN);
-    stopMotors();
+    interrupts();
 }
 
 inline void turnRight() {

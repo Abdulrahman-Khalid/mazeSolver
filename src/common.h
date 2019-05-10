@@ -74,8 +74,8 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #define TIME_TURN_180 2 * TIME_TURN_90
 
 // motor speeds
-#define LEFT_FRD_SPD 160
-#define RIGHT_FRD_SPD 160
+#define LEFT_FRD_SPD 200
+#define RIGHT_FRD_SPD 200
 
 #define LEFT_TRN_SPD 180
 #define RIGHT_TRN_SPD 180
@@ -86,14 +86,14 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #ifdef TIVA
     #define LEFT_MOTOR_PIN1 PE_3
     #define LEFT_MOTOR_PIN2 PE_2
-    #define LEFT_MOTOR_SPD_PIN PD_1
+    #define LEFT_MOTOR_SPD_PIN PB_5
 
     #define RIGHT_MOTOR_PIN1 PB_3
     #define RIGHT_MOTOR_PIN2 PC_4
-    #define RIGHT_MOTOR_SPD_PIN PD_2
+    #define RIGHT_MOTOR_SPD_PIN PD_0
 
     #define FRONT_US_TRIG PA_7
-    #define FRONT_US_ECHO PE_5
+    #define FRONT_US_ECHO PB_4
 
     #define RIGHT_US_TRIG PA_5
     #define RIGHT_US_ECHO PE_4
@@ -131,15 +131,15 @@ enum Orientation : uint8_t { NORTH, EAST, SOUTH, WEST };
 #endif
 
 #ifndef TEST
-    #define MAZE_LENGTH 5
-    #define MAZE_HEIGHT 3
+    #define MAZE_LENGTH 4
+    #define MAZE_HEIGHT 2
 
-    #define START_X 0
+    #define START_X 1
     #define START_Y 0
     #define START_ORIENT Orientation::EAST
 
     #define TARGET_X 3
-    #define TARGET_Y 2
+    #define TARGET_Y 1
 #endif
 
 #ifdef TEST
